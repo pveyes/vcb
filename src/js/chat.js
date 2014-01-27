@@ -36,14 +36,14 @@ var chat = (function($, dataChannel) {
 	 * @param text	 	textarea
 	 */
 
-	chat.send = function(client, text) {
+	chat.send = function(client, message) {
 		// message valid, construct new message data channel
-		var message = new dataChannel.msgConstructor(text);
-		message.t = 'c';
-		message.d = text;
+		var data = new dataChannel.msgConstructor(message);
+		data.t = 'c';
+		data.d = message;
 
 		// send data via dataChannel
-		dataChannel.sendMessage(client, message);
+		dataChannel.sendMessage(client, data);
 	};
 
 	return chat;

@@ -27,13 +27,14 @@ module.exports = function(grunt) {
 					mangle: false
 				},
 				files: {
-					'app/public/script.min.js': [ 'src/js/socket.io.js',
-												  'src/js/jquery.js',
-												  'src/js/NgisX.js',
-												  'src/js/recorderWebM.js',
-												  'src/js/dataChannel.js',
-												  'src/js/chat.js',
-												  'src/js/stream.js' ]
+					'app/public/script.min.js': 
+					[ 'src/js/socket.io.js',
+					  'src/js/jquery.js',
+					  'src/js/NgisX.js',
+					  'src/js/recorderWebM.js',
+					  'src/js/dataChannel.js',
+					  'src/js/chat.js',
+					  'src/js/stream.js' ]
 				}
 			}
 		}

@@ -42,7 +42,7 @@ var dataChannel = (function() {
 			cekMessage = false;
 		};
 
-		if(cekMessage) {
+		if (cekMessage) {
 
 			var msgBuffer = [];
 
@@ -55,11 +55,11 @@ var dataChannel = (function() {
 					break;
 				case 3:
 					msgBuffer[d.data.from] += msgObj.d;
-					dataChannel.joinMessage(msgBuffer[d.data.from], msgObj);
+					dataChannel.joinMessage(d, msgBuffer[d.data.from], msgObj);
 					break;
 				case 4:
 					msgBuffer[d.data.from] = msgObj.d;
-					dataChannel.joinMessage(msgBuffer[d.data.from], msgObj);
+					dataChannel.joinMessage(d, msgBuffer[d.data.from], msgObj);
 					break;
 				default:
 					console.log('Warning: No event handler for this message status: '+msgObj.s);
@@ -78,7 +78,7 @@ var dataChannel = (function() {
 	 * @param @objectMessage object of msgDataChannelConstructor contain {s}
 	 */
 
-	dataChannel.joinMessage = function(joinMessage, objectMessage){
+	dataChannel.joinMessage = function(d, joinMessage, objectMessage){
 		switch(objectMessage.t) {
 			case 'c': 
 				// Chat
@@ -91,7 +91,7 @@ var dataChannel = (function() {
 				// Presentation
 				var message = JSON.parse(joinMessage),
 					index = parseInt(message.p),
-					data = message.f;
+					slide = message.f;
 
 				presentation.receive(index, slide);
 				break;

@@ -868,100 +868,7 @@ var startStream = function(roomInfo) {
 	** @param @datachannel RTCDataChannel object created by RTCPeerConnection.createDataChannel() method
 	 */
 	var VCBpeer = new Object();
-	var VCBMsgBuff = new Object();
 	Vpeer = VCBpeer;
-
-	/** Handle message receive via DataChannel
-	** @param @d object of {status,data{from,to}}. It forward route data from STUN.
-	** @param @e object of RTCDataChannelEvent
-	 */
-	var handleDataChannelReceiveMessages = function(d, e) {
-		var msgObj = JSON.parse(e.data);
-		var cekMessage;
-		if(msgObj){
-			cekMessage = msgObj.t && msgObj.l && msgObj.p && msgObj.s &&msgObj.d
-		}else{
-			cekMessage = false;
-		};
-		if(cekMessage){
-			/** handle event after received messages is joined
-			** @param @joinMessage string to process due to received message type
-			** @param @objectMessage object of msgDataChannelConstructor contain {s}
-			*/
-			var handleJoiningReceiveMessages = function(joinMessage, objectMessage){
-				switch(objectMessage.t){
-					case 'c': 
-						// Prepare message
-						var chat = $('#chat-template').html()
-						chat = chat.replace('{{name}}', d.data.client.name)
-						chat = chat.replace('{{message}}', joinMessage)
-
-						// Append to chat list
-						$('#chat-list').prepend(chat)
-						break;
-					case 'p':
-						// Presentattion
-						var message = JSON.parse(joinMessage);
-						pptFiles.data[parseInt(message.p)] = message.f;
-						pptFiles.size += message.f.length;
-						break;
-					case 'e': null
-						break;
-					default: console.log('Warning: No event handling for this undefined message type :'+objectMessage.t)
-						break;
-				};
-			};
-
-			switch(msgObj.s){
-				case 1: VCBMsgBuff[d.data.from] = msgObj.d;
-					break;
-				case 2: VCBMsgBuff[d.data.from] += msgObj.d;
-					break;
-				case 3: VCBMsgBuff[d.data.from] += msgObj.d;
-					handleJoiningReceiveMessages(VCBMsgBuff[d.data.from], msgObj);
-					break;
-				case 4: VCBMsgBuff[d.data.from] = msgObj.d;
-					handleJoiningReceiveMessages(VCBMsgBuff[d.data.from], msgObj);
-					break;
-				default: console.log('Warning: No event handler for this message status: '+msgObj.s);
-					break;
-			};
-		}
-		else {
-			console.log('Error: Wrong format data message received');
-		}
-	};
-	
-	/** Handle message before send via DataChannel.
-	** Cek message length due to split needed
-	** @param @channel object of RTCDataChannel
-	** @param @data message object of msgDataChannelConstructor {@d}
-	 */
-	var handleDataChannelSendMessages = function(channel, data){
-		var msgBuffer = 65;
-		var res = new msgDataChannelConstructor(data);
-		res.l = Math.ceil(data.d.length/msgBuffer);
-		for(var i=1; i<=res.l; i++){
-			var positionEnd = i*msgBuffer;
-			res.p = i;
-			if(res.l==1){
-				//single message
-				res.s=4;
-			}else{
-				//splited message
-				switch(i){
-					case 1: res.s = 1;
-						break;
-					case res.l: res.s = 3;
-						break
-					default: res.s = 2 ;
-						break;
-				}
-			};
-			res.d = data.d.slice(positionEnd-msgBuffer,positionEnd);
-			channel.send(JSON.stringify(res));
-		};
-	}
 
 	var sendFilePresentation = function(clientID) {
 		var handleSendFileViaSocket = function(clientID, msgFile) {
@@ -1024,21 +931,21 @@ var startStream = function(roomInfo) {
 		// Create RTCDataChannel and 
 		// handle datachannel event on RTCDataChannel
 		VCBpeer[d.data.from].datachannel = peer.createDataChannel(d.data.from,{reliable: true});
-		var datachannel = VCBpeer[d.data.from].datachannel;
-		datachannel.onclose = function(e) {
+		var channel = VCBpeer[d.data.from].datachannel;
+		channel.onclose = function(e) {
 			console.log("DataChannelObject onclose from: " + d.data.from);
 			console.log(e);
 		};
-		datachannel.onerror = function(e) {
+		channel.onerror = function(e) {
 			console.log("DataChannelObject onerror from: " + d.data.from);
 			console.log(e);
 		};
-		datachannel.onmessage = function(e) {
+		channel.onmessage = function(e) {
 			console.log("DataChannelObject onmessage from: " + d.data.from);
 			console.log(e);
-			handleDataChannelReceiveMessages(d,e)
+			dataChannel.receiveMessage(d,e);
 		};
-		datachannel.onopen = function(e) {
+		channel.onopen = function(e) {
 			console.log("DataChannelObject onopen from: " + d.data.from);
 			console.log(e);
 			sendFilePresentation(d.data.from);
@@ -1153,21 +1060,21 @@ var startStream = function(roomInfo) {
 		peer.ondatachannel = function(e) {
 			console.log('Info: ondatachannel from '+d.data.from); console.log(e);
 			VCBpeer[d.data.from].datachannel = e.channel;
-			var datachannel = e.channel;
-			datachannel.onclose = function(e) {
+			var channel = e.channel;
+			channel.onclose = function(e) {
 				console.log("getOffer peer DataChannelObject onclose from: ", d.data.from)
 				console.log(e)
 			}
-			datachannel.onerror = function(e) {
+			channel.onerror = function(e) {
 				console.log("getOffer peer DataChannelObject onerror from: ", d.data.from)
 				console.log(e)
 			}
-			datachannel.onmessage = function(e) {
-				console.log("getOffer peer DataChannelObject onmessage from: ", d.data.from)
-				console.log(e)
-				handleDataChannelReceiveMessages(d, e)
+			channel.onmessage = function(e) {
+				console.log("getOffer peer DataChannelObject onmessage from: ", d.data.from);
+				console.log(e);
+				dataChannel.receiveMessage(d, e);
 			}
-			datachannel.onopen = function(e) {
+			channel.onopen = function(e) {
 				console.log("getOffer peer DataChannelObject onopen", d);
 				console.log(e)
 			}
@@ -1268,7 +1175,7 @@ var startStream = function(roomInfo) {
 	 */
 	var handleInitPresentation = function(d) {
 		var tmp = {data:d.data.file};
-		handleDataChannelReceiveMessages(d, tmp);
+		dataChannel.receiveMessage(d, tmp);
 		$('#slide-current').attr('src',pptFiles.data[0]);
 		$('#slide-current-num').html((currentSlide+1) + '/' + pptFiles.data.length);
 
