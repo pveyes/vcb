@@ -21,12 +21,12 @@ var chat = (function($, dataChannel) {
 
 	chat.receive = function(sender, message) {
 		// Parse data into HTML
-		var template = $('#chat-template').html();
-		template = template.replace('{{name}}', sender);
-		template = template.replace('{{message}}', message);
+		var chatTemplate = $('#chat-template').html();
+		chatTemplate = chatTemplate.replace('{{name}}', sender);
+		chatTemplate = chatTemplate.replace('{{message}}', message);
 
 		// Prepend data into DOM
-		$('#chat-list').prepend(template);
+		$('#chat-list').prepend(chatTemplate);
 	};
 
 	/**
