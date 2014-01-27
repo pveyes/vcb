@@ -159,9 +159,9 @@ module.exports = function() {
 	 */
 
 	var listRoom = function(clientInfo) {
-		var clientSessionID = this.id
-		  , respnse = new Object()
-		  , rooms;
+		var clientSessionID = this.id,
+			response = new Object(),
+			rooms;
 
 		logger.info('STUN:Start listRoom with param @client from session:' + this.id);
 
@@ -433,7 +433,8 @@ module.exports = function() {
 	**		data: {status,data:{to,from,session}}
 	 */
 	var getOffer = function(d) {
-		var cekMessage;
+		var cekMessage,
+			clientSessionID;
 
 		logger.info('STUN: getOffer with @param object {data:{to,from,session}} from client '+this.id); 
 		logger.info(d);
