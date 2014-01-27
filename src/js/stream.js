@@ -1427,8 +1427,10 @@ var initStream = function(d) {
 		startStream(d.roomInfo);
 	}
 	else {
-		VCB.localStream.stop();
-		VCB.localStream = undefined;
+		if (VCB.localStream) {
+			VCB.localStream.stop();
+			VCB.localStream = undefined;
+		}
 
 		// request is not valid or there's an error
 		// display the error to user
