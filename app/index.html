@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>VCB Home</title>
+	</head>
+
+	<link rel="stylesheet" type="text/css" href="/public/style.min.css">
+
+	<div id="main-content" class="dashboard animated fadeIn">
+		<div class="loading-spinner iconb"></div>
+	</div>
+	<div id="message" class="page-message"></div>
+
+	<script type="text/template" id="login-template">
+		<div class="full">
+			<form action="#" method="post" class="login" id="login">
+				<input id="user" type="text" name="name" placeholder="Enter your name" autocomplete="off" spellcheck="false" class="input-block" />
+				<input id="login-button" type="submit" value="LOG IN" class="input-block button submit-button" />
+			</form>
+		</div>
+	</script>
+
+	<script type="text/template" id="loading-template">
+		<div class="loading-spinner iconb"></div>
+	</script>
+
+	<script type="text/template" id="setup-template">
+		<div class="full">
+			<div id="setup" class="setup animated fadeInDown">
+				<div class="user-info">
+					<div class="user-avatar icon"></div>
+					<h1 class="user-name">Welcome, {{user}}</h1>
+				</div>
+				<p>To use the VCB please select your STUN Server. Stun Server acts like gateway to connect you to all user using VCB.</p>
+				<div id="stun-select" data-default="stun-select-template" class="stun-select"></div>
+			</div>
+		</div>
+	</script>
+
+	<script type="text/template" id="stun-select-template">
+		<a href="#" data-address="http://ristek.stei.itb.ac.id" class="stun-option button submit-button">Default</a>
+		<a href="#" data-address="http://localhost:2013" class="stun-option button submit-button">Local</a>
+		<a href="#" data-address="custom" class="stun-option button submit-button">Custom</a>
+	</script>
+
+	<script type="text/template" id="custom-stun-template">
+		<form id="stun-setup" action="/" method="post" class="animated fadeInDown">
+			<input type="text" name="stun" spellcheck="false" placeholder="Your Stun Server" id="stun-server" class="input-block">
+			<input id="setup-submit" type="submit" value="Continue" class="button button-double submit-button input-submit">
+			<button id="custom-stun-cancel" class="button-double button cancel-button">Back</button>
+		</form>
+	</script>
+
+	<script type="text/template" id="dashboard-template">
+		<div id="dashboard-info" class="dashboard-info no-select animated fadeIn">
+			<a id="logout" href="/logout" class="button logout">Logout</a>
+			<div class="user-info">
+				<div class="user-avatar icon"></div>
+				<h2>{{user}}</h2>
+			</div>
+			<ul class="devices-info info-container">
+				<h3>Device Info</h3>
+				<li id="display-info" class="device-info {{display-status}}">Display</li>
+				<li id="camera-info" class="device-info {{camera-status}}">Camera</li>
+				<li id="audio-in-info" class="device-info {{audio-in-status}}">Audio In</li>
+				<li id="audio-out-info" class="device-info {{audio-out-status}}">Audio Out</li>
+			</ul>
+			<div class="misc-info info-container">
+				<h3 id="stun-info" class="device-info check change-stun-button">STUN Server</h3>
+				<span>{{stun-server}}</span>
+			</div>
+			<div class="misc-info info-container">
+				<h3>Your IP Address</h3>
+				<span id="client-ip">{{client-ip}}</span>
+			</div>
+		</div>
+		<div id="dashboard-content" data-default="dashboard-home-template" class="dashboard-content animated fadeIn"></div>
+		<div id="popup"></div>
+	</script>
+
+	<script type="text/template" id="dashboard-home-template">
+		<div id="main-menus">
+			<nav class="main-menus cf">
+				<a id="local-content-button" href="#" data-hover="local-content" class="iconb main-menu icon-local-content">Browse local content</a>
+				<a id="create-room-button" href="#" data-hover="create-room" class="iconb main-menu icon-create-room">Create new room</a>
+				<a id="join-room-button" href="#" data-hover="join-room" class="iconb main-menu icon-join-room">Join existing room</a>
+				<a id="select-device-button" href="#" data-hover="select-device" class="iconb main-menu icon-select-device">Select device</a>
+				<a id="change-stun-button" href="#" data-hover="stun" class="iconb main-menu icon-stun change-stun-button">Change STUN server</a>
+			</nav>
+		</div>
+	</script>
+
+	<script type="text/template" id="local-content-template">
+		<div class="popup animated fadeIn">
+			<div class="popup-container">
+				<form id="local-content-form" class="form-popup animated fadeInDown">
+					<h1>Playback Media from Local Storage</h1>
+					<input id="local-content-input" type="file" accept="video/*" class="input-block input-left">
+					<input type="submit" value="Play" class="button-double button submit-button">
+					<button class="local-playback-close button-double button cancel-button">Cancel</button>
+				</form>
+			</div>
+		</div>
+	</script>
+
+	<script type="text/template" id="local-playback-template">
+		<div class="local-playback">
+			<div class="local-playback" id="local-playback-wrapper" style="display:none">
+				<a href="#" class="local-playback-close iconb icon-local-playback-close"></a>
+				<video id="local-playback" class="video-show" autoplay="false" controls="true"></video>
+			</div>
+		</div>
+	</script>
+
+
+	<script type="text/template" id="create-room-template">
+		<div class="popup animated fadeIn">
+			<div class="popup-container">
+				<form id="create-room" class="form-popup animated fadeInDown">
+					<h1>Create Room</h1>
+					<input id="room-name-input" type="text" name="name" placeholder="Nama Ruangan" class="input-block input-left">
+					<textarea id="room-desc-input" name="desc" placeholder="Deskripsi ruangan" spellcheck="false" class="input-block input-left"></textarea>
+					<input id="room-presentation-input" type="file" multiple class="input-block input-left">
+					<input type="submit" value="Create" class="button-double button submit-button">
+					<button id="create-room-cancel" class="button-double button cancel-button">Cancel</button>
+				</form>
+			</div>
+		</div>
+	</script>
+
+	<script type="text/template" id="join-room-template">
+		<div class="container cf animated fadeIn">
+			<h1>Room List</h1>
+			<a href="#" id="join-room-cancel">Return to dashboard</a>
+			<ul id="room-list"></ul>
+		</div>
+	</script>
+
+	<script type="text/template" id="list-room-template">
+		<li>
+			<a href="#" id="{{room_id}}" class="room">{{room_name}}</a><span></span>
+			<small>Speaker: {{speaker}}</small>
+			<p>{{room_desc}}</p>
+		</li>
+	</script>
+
+	<script type="text/template" id="stream-template">
+		<div id="media" class="container cf media animated fadeIn">
+			<div class="main-stream">
+				<video id="stream" controls="yes" class="stream"></video>
+				<div id="peer-stream" class="remote-stream"></div>
+				<div class="room-info">
+					<div class="room-info-main">
+						<h2>{{room_name}}</h2>
+						<a id="record-stream-button" href="#" data-control="record" class="button room-button record-button">Record</a>
+						<a id="leave-room-button" href="#" class="button room-button leave-button cancel-button">Leave Room</a>
+					</div>
+					<div class="description">
+						<div class="description-text">
+							<h4>Description</h4>
+							<p>{{room_desc}}</p>
+						</div>
+						<div class="speaker">
+							<h4>Speaker</h4>
+							<p>{{room_speaker}}</p>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div id="slide">
+				<img id="slide-current" class="slide" title="Click to view this on full-screen">
+				<div id="slide-control" class="cf">
+					<a id="slide-control-prev" href="#" data-control="prev" class="slide-control slide-control-prev icon disabled"></a>
+					<div id="slide-current-num" class="current-slide"></div>
+					<a id="slide-control-next" href="#" data-control="next" class="slide-control slide-control-next icon"></a>
+				</div>
+			</div>
+		</div>
+		<div class="container cf animated fadeIn">
+			<div class="chatbox">
+				<h3>Join the Discussion</h3>
+				<form id="chat" action="#" method="POST" class="chat cf">
+					<textarea placeholder="Write your message here..." id="chatbox" class="input-block input-left"></textarea>
+					<input type="submit" value="Send" id="chat-button" class="button submit-button chat-button">
+				</form>
+				<ul id="chat-list" class="chatlist"></ul>
+			</div>
+		</div>
+	</script>
+
+	<script type="text/template" id="chat-template">
+		<li class="chat-message animated fadeIn">
+			<strong>{{name}}</strong>
+			<p>{{message}}</p>
+		</li>
+	</script>
+
+	<script type="text/template" id="leave-room-message-template">
+		<li class="leave-room-message misc-message">
+			<strong>{{name}} left this room</strong>
+		</li>
+	</script>
+
+	<script type="text/template" id="join-room-message-template">
+		<li class="join-room-message misc-message">
+			<strong>{{name}} joined this room</strong>
+		</li>
+	</script>
+
+	<script type="text/javascript" src="/public/script.min.js"></script>
+</html>

@@ -1,0 +1,47 @@
+{
+  "name": "vcb",
+  "main": "index.js",
+  "version": "3.1.0",
+  "description": "Virtual Classbox, capstone project. Video, Audio & Data Streaming + Storage",
+  "keywords": [
+    "vcb",
+    "audio",
+    "video",
+    "data",
+    "streaming",
+    "storage"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pveyes/vcb.git"
+  },
+  "contributors": [
+    {
+      "name": "Fatih Kalifa",
+      "email": "fatih@pvey.es"
+    },
+    {
+      "name": "Rizal Muhammad Nur",
+      "email": "rizal.m.nur@arc.itb.ac.id"
+    },
+    {
+      "name": "Kurnia Chris Pradana Wicaksono",
+      "email": "pradanawicaksono@gmail.com"
+    }
+  ],
+  "engines": {
+    "node": ">=0.10"
+  },
+  "engineStrict": true,
+  "dependencies": {
+    "express": "3.4.x",
+    "socket.io": "0.9.x"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.2",
+    "grunt-contrib-uglify": "~0.3.2",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-cssmin": "~0.7.0",
+    "grunt-contrib-copy": "~0.5.0"
+  }
+}
