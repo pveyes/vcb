@@ -633,7 +633,7 @@ var showListRoom = function(d) {
 		e.preventDefault()
 
 		// Clear previous media stream
-		stream.stopLocalStream();
+		stream.clear();
 
 		var roomID = this.id;
 
@@ -654,7 +654,7 @@ var showListRoom = function(d) {
 
 		var successCallback = function(mediastream) {
 			stream.local = mediastream;
-			startStream(roomInfo);
+			stream.start();
 			socket.emit('join-room', roomID);
 		}
 
@@ -686,101 +686,6 @@ var statusSTUN = function() {
 }
 
 /**
- * Start stream using WebRTC
- *
- * Display stream page, initialize local stream, presentation slide, and data channel
- * also contain event listener for recording function, chat, and presentation control
- * signal
- */
-var startStream = function(roomInfo) {
-
-	// template builder
-	var streamTemplate = $('#stream-template').html()
-	streamTemplate = streamTemplate.replace('{{room_name}}', roomInfo.name)
-	streamTemplate = streamTemplate.replace('{{room_desc}}', roomInfo.desc) 
-	streamTemplate = streamTemplate.replace('{{room_speaker}}', roomInfo.creator.name)
-	$('#dashboard-content').html(streamTemplate)
-
-	var localStreamURL = window.URL.createObjectURL(stream.local)
-
-	stream.roomInfo = roomInfo;
-
-	if (roomInfo.creator.sessionID == socket.socket.sessionid) {
-		// current user is creator, initialize stream as primary stream
-		// and mute his/her own stream to remove feedback noise
-		stream.initCreator(localStreamURL)
-		$('#stream').attr('muted','yes');
-
-		presentation.init(socket, webrtc.peers);
-
-		/**
-		 * Event listener for presentation slide control signal.
-		 *
-		 * Two types of presentation slide control signal, previous and next.
-		 * Every control signal will be broadcasted directly as current slide
-		 * position to minimze computation on all clients
-		 */
-		$('#main-content').on('click', '.slide-control', function(e) {
-			e.preventDefault();
-			var controlSignal = $(this).attr('data-control');
-
-			presentation.control(controlSignal, socket, webrtc.peers);
-		});
-	}
-	else {
-		// current user is not creator, place his/her stream as viewer mode
-		// and mute his/her stream to prevent feedback noise
-		stream.initViewer(socket.sessionID, localStreamURL, true);
-	}
-
-	/**
-	 * Event listener on record stream button
-	 *
-	 * Prevent button default behavior, change button to STOP button, and invoke
-	 * recordStream() function to start recording stream. Recording will stopped
-	 * when room is destroyed or user decided to stop recording using STOP button
-	 */
-	$('#main-content').on('click', '#record-stream-button', function(e) {
-		e.preventDefault();
-		var control = $(this).attr('data-control');
-
-		var streamToRecord,
-			creatorSessionID = stream.roomInfo.creator.sessionID,
-			currentSessionID = socket.socket.sessionid;
-
-		if (creatorSessionID == currentSessionID) {
-			streamToRecord = stream.local;
-		}
-		else {
-			streamToRecord = webrtc.peers[creatorSessionID].remoteStream.stream;
-		}
-
-		recorder.control(control, streamToRecord);
-	});
-
-	/**
-	 * Event listener for chatbox submit button
-	 *
-	 * Prevent default submit button, instead, directly place chat message
-	 * from textarea into chat history and broadcast it via WebRTC data
-	 * channel to other participant.
-	 */
-	$('#main-content').on('submit', '#chat', function(e) {
-		// Prevent HTTP POST request
-		e.preventDefault();
-
-		// read chat message from textarea
-		var message = $('#chatbox')[0];
-
-		// send!
-		chat.send(webrtc.peers, message.value);
-
-		// reset textarea value
-		message.value = null;
-	});
-};
-
-/**
  * Handle display on room is destroyed. Room can be destroyed because of
  * 2 reasons, the creator left, or current user left. Reset HTML DOM to
  * initial state, which is dashboard page.
@@ -788,7 +693,7 @@ var startStream = function(roomInfo) {
 var handleLeaveRoom = function(d) {
 	// stop local stream
 	if (d.creator == d.client || d.client == socket.socket.session) {
-		stream.stopLocalStream();
+		stream.clear();
 		$('#dashboard-content').html($('#dashboard-home-template').html())
 		// reset mem
 		webrtc.resetPeers();
@@ -814,7 +719,7 @@ var handleLeaveRoom = function(d) {
  */
 var leaveRoom = function() {
 	socket.emit('leave-room');
-	stream.stopLocalStream();
+	stream.clear();
 };
 
 /**
@@ -829,11 +734,10 @@ var initStream = function(d) {
 	if (d.status == true) {
 
 		stream.roomInfo = d.roomInfo;
-
-		startStream(d.roomInfo);
+		stream.start();
 	}
 	else {
-		stream.stopLocalStream();
+		stream.clear();
 
 		// request is not valid or there's an error
 		// display the error to user

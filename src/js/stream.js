@@ -171,11 +171,13 @@ var stream = (function(window) {
 	 * Clear local stream (if any)
 	 */
 
-	stream.stopLocalStream = function() {
+	stream.clear = function() {
 		if (stream.local.stop) {
 			stream.local.stop();
 			stream.local = {};
 		}
+
+		stream.roomInfo = {};
 	}
 
 	return stream;
