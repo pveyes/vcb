@@ -16,7 +16,7 @@ var recorder = (function($, WebMrecorder) {
 	 * Recorder library
 	 */
 
-	recorder.lib = {}
+	recorder.lib = undefined
 
 	/**
 	 * Record current stream (video on creator), start encoding and wait
@@ -25,7 +25,9 @@ var recorder = (function($, WebMrecorder) {
 	 */
 	 
 	recorder.start = function(stream) {
-		if (VCB.recorder) {
+		console.log('Start recording...');
+
+		if (recorder.lib) {
 			// check existing record system
 			return true;
 		}
@@ -40,6 +42,8 @@ var recorder = (function($, WebMrecorder) {
 	 */
 
 	recorder.stop = function() {
+		console.log('Stop recording...');
+
 		if (recorder.lib) {
 			recorder.lib.stop();
 			recorder.lib = undefined;

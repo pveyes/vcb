@@ -26,22 +26,6 @@ var webrtc = (function() {
 	webrtc.peers = [];
 
 	/**
-	 * Websocket connection
-	 *
-	 * @api private
-	 */
-
-	var socket;
-
-	/**
-	 * Attach pointer to websocket
-	 */
-
-	webrtc.attachSocket = function(s) {
-		socket = s;
-	}
-
-	/**
 	 * Peer constructor
 	 */
 
@@ -135,7 +119,7 @@ var webrtc = (function() {
 					candidate: tmpCandidate
 				}
 			};
-			socket.emit('on-ice-candidate',res);
+			stun.socket.emit('on-ice-candidate',res);
 		};
 		peer.onsignalingstatechange = function(e) {
 			console.log('Info: onsignalingstatechange from: ', d.data.from);
@@ -173,7 +157,7 @@ var webrtc = (function() {
 					}
 				}
 			};
-			socket.emit('get-offer', res);
+			stun.socket.emit('get-offer', res);
 		});
 	};
 
@@ -182,7 +166,7 @@ var webrtc = (function() {
 	 */
 
 	webrtc.handleGetOffer = function(d) {
-		if (d.data.client.sessionID != socket.socket.sessionid) {
+		if (d.data.client.sessionID != stun.socket.socket.sessionid) {
 			// Send notification to clients
 			// New client join
 			var joinMessage = $('#join-room-message-template').html().replace('{{name}}', d.data.client.name)
@@ -216,7 +200,7 @@ var webrtc = (function() {
 					candidate: tmpCandidate
 				}
 			};
-			socket.emit('on-ice-candidate',res);
+			stun.socket.emit('on-ice-candidate',res);
 		};
 		peer.onsignalingstatechange = function(e) {
 			console.log('Info: onsignalingstatechange from: ', d.data.from);
@@ -292,7 +276,7 @@ var webrtc = (function() {
 					}
 				}
 			};
-			socket.emit('get-answer', res);
+			stun.socket.emit('get-answer', res);
 		});
 	};
 
@@ -321,7 +305,7 @@ var webrtc = (function() {
 			}
 		};
 
-		socket.emit('get-last-description', res);
+		stun.socket.emit('get-last-description', res);
 	};
 
 	/**

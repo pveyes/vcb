@@ -23,20 +23,6 @@ var stream = (function(window) {
 	stream.roomInfo = {};
 
 	/**
-	 * Socket sessionID, to check primary / secondary stream
-	 */
-
-	var socketSessionID;
-
-	/**
-	 * Attach pointer to websocket connection
-	 */
-
-	stream.setSocketSessionID = function(sessionID) {
-		socketSessionID = sessionID;
-	}
-
-	/**
 	 * Initialize creator stream
 	 */
 
@@ -92,13 +78,13 @@ var stream = (function(window) {
 
 		var localStreamURL = window.URL.createObjectURL(stream.local);
 
-		if (roomInfo.creator.sessionID == socketSessionID) {
+		if (roomInfo.creator.sessionID == stun.socket.socket.sessionid) {
 			// current user is creator, initialize stream as primary stream
 			// and mute his/her own stream to remove feedback noise
 			stream.initCreator(localStreamURL)
 			$('#stream').attr('muted','yes');
 
-			presentation.init(socket, webrtc.peers);
+			presentation.init();
 
 			/**
 			 * Event listener for presentation slide control signal.
@@ -111,13 +97,13 @@ var stream = (function(window) {
 				e.preventDefault();
 				var controlSignal = $(this).attr('data-control');
 
-				presentation.control(controlSignal, socket, webrtc.peers);
+				presentation.control(controlSignal, stun.socket, webrtc.peers);
 			});
 		}
 		else {
 			// current user is not creator, place his/her stream as viewer mode
 			// and mute his/her stream to prevent feedback noise
-			stream.initViewer(socketSessionID, localStreamURL, true);
+			stream.initViewer(stun.socket.socket.sessionid, localStreamURL, true);
 		}
 
 		/**
@@ -132,7 +118,7 @@ var stream = (function(window) {
 
 			var streamToRecord,
 				creatorSessionID = stream.roomInfo.creator.sessionID,
-				currentSessionID = socketSessionID,
+				currentSessionID = stun.socket.socket.sessionid,
 				controlSignal = $(this).attr('data-control');
 
 			if (creatorSessionID == currentSessionID) {
@@ -141,6 +127,8 @@ var stream = (function(window) {
 			else {
 				streamToRecord = webrtc.peers[creatorSessionID].remoteStream.stream;
 			}
+
+			console.log('Initialize recording using ', streamToRecord);
 
 			recorder.control(controlSignal, streamToRecord);
 		});
