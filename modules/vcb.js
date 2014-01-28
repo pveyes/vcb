@@ -599,7 +599,7 @@ module.exports = function() {
 					file: d.data.file
 				}
 			}
-			io.sockets.sockets[d.data.to].emit('init-presentation', res);
+			io.sockets.sockets[d.data.to].emit('start-presentation', res);
 		}
 		else {
 			logger.info('STUN: Error process presentation. Input message invalid from client '+this.id);
@@ -633,7 +633,7 @@ module.exports = function() {
 			io.sockets.sockets[d.data.to].emit('control-presentation', res);
 		}
 		else {
-			logger.info('STUN: Error process presentation. Input message invalid from client '+this.id);
+			logger.error('STUN: Error process presentation. Input message invalid from client '+this.id);
 		}
 	}
 

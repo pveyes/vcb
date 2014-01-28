@@ -395,9 +395,6 @@ var logout = function(e) {
 var VCBnet = new Object();
 var Vpeer;
 
-var pptFiles = {data: new Array(), size: 0},
-	currentSlide = 0;
-
 /**
  * Display LOCAL_CONTENT form in popup overlaying the initial dashboard page
  */
@@ -533,24 +530,20 @@ var createRoom = function(e) {
 	 * Event listener on form presentation input in CREATE_ROOM
 	 *
 	 * Encode all image input into base64 and store them in sorted array,
-	 * get number of image selected and store those numbers in pptFiles object
+	 * get number of image selected and store those numbers in presentation object
 	 */
 	$('#main-content').on('change', '#room-presentation-input', function(e) {
-		// reset pptFiles object
-		pptFiles = {
-			data: [],
-			size: 0
-		}
+		// reset presentation object
+		presentation.reset();
 
-		// read all files and store to pptFiles data
+		// read all files and store to presentation data
 		var files = e.target.files;
 		for (var i = 0; i < files.length; i++) {
 			var reader = new FileReader();
 			var file = files[i];
 
 			reader.onload = function(e) {
-				pptFiles.data.push(e.target.result);
-				pptFiles.size += e.target.result.length;
+				presentation.addSlide(e.target.result);
 			}
 
 			reader.readAsDataURL(file);
@@ -742,15 +735,7 @@ var startStream = function(roomInfo) {
 		initMainStream(localStreamURL)
 		$('#stream').attr('muted','yes');
 
-		// Display first slide on stream page, and show current slide &
-		// total slides.
-		$('#slide-current').attr('src', pptFiles.data[0]);
-		$('#slide-current-num').html((currentSlide+1) + '/' + pptFiles.data.length);
-
-		// Style fix for single slide
-		if (currentSlide == pptFiles.data.length-1) {
-			$('#slide-control-next').addClass('disabled');
-		}
+		presentation.init(socket, VCBpeer);
 
 		/**
 		 * Event listener for presentation slide control signal.
@@ -761,54 +746,10 @@ var startStream = function(roomInfo) {
 		 */
 		$('#main-content').on('click', '.slide-control', function(e) {
 			e.preventDefault();
-			control = $(this).attr('data-control');
+			var controlSignal = $(this).attr('data-control');
 
-			if (control == 'next') {
-				if (currentSlide < pptFiles.data.length-1) {
-					currentSlide += 1;
-				}
-				else {
-					return false;
-				}
-			}
-			else if (control == 'prev') {
-				if (currentSlide > 0) {
-					currentSlide -= 1;					
-				}
-				else {
-					return false;
-				}
-			}
-			else {
-				return false;
-			}
-
-			if (currentSlide > 0) {
-				$('#slide-control-prev').removeClass('disabled');
-			}
-			if (currentSlide == 0) {
-				$('#slide-control-prev').addClass('disabled');
-			}
-			if (currentSlide < pptFiles.data.length-1) {
-				$('#slide-control-next').removeClass('disabled');
-			}
-			if (currentSlide == pptFiles.data.length-1) {
-				$('#slide-control-next').addClass('disabled');
-			}
-
-			$('#slide-current-num').html((currentSlide+1) + '/' + pptFiles.data.length);
-			$('#slide-current').attr('src', pptFiles.data[currentSlide]);
-
-			for (var client in VCBpeer){
-				var d = {
-					data: {
-						to: client,
-						page: currentSlide
-					}
-				}
-				socket.emit('control-presentation', d);
-			}
-		})
+			presentation.control(controlSignal, socket, VCBpeer);
+		});
 	}
 	else {
 		// current user is not creator, place his/her stream as viewer mode
@@ -870,52 +811,6 @@ var startStream = function(roomInfo) {
 	var VCBpeer = new Object();
 	Vpeer = VCBpeer;
 
-	var sendFilePresentation = function(clientID) {
-		var handleSendFileViaSocket = function(clientID, msgFile) {
-			var msgBuffer = 50000;
-			var res = new msgDataChannelConstructor(data);
-			var d = {data:{to:clientID,file:null}};
-			res.l = Math.ceil(msgFile.d.length/msgBuffer);
-			res.t = 'p';
-			for (var i = 1; i <= res.l; i++) {
-				var positionEnd = i*msgBuffer;
-				res.p = i;
-				if (res.l == 1) {
-					//single message
-					res.s = 4;
-				}
-				else {
-					//splited message
-					switch(i){
-						case 1:
-							res.s = 1;
-							break;
-						case res.l:
-							res.s = 3;
-							break
-						default:
-							res.s = 2 ;
-							break;
-					}
-				};
-				res.d = msgFile.d.slice(positionEnd-msgBuffer,positionEnd);
-				d.data.file = JSON.stringify(res);
-				socket.emit('init-presentation', d);
-			};
-		}
-
-		for (var i in pptFiles.data) {
-			var msg = new msgDataChannelConstructor();
-			msg.t = 'p';
-			data = {
-				f: pptFiles.data[i], // raw base64
-				p: i // current part
-			};
-			msg.d = JSON.stringify(data);
-			handleSendFileViaSocket(clientID, msg);
-		}
-	}
-
 	// Process RTCPeerConnection
 	var handleAskOffer = function(d) {
 		// Send notification to clients
@@ -948,7 +843,7 @@ var startStream = function(roomInfo) {
 		channel.onopen = function(e) {
 			console.log("DataChannelObject onopen from: " + d.data.from);
 			console.log(e);
-			sendFilePresentation(d.data.from);
+			presentation.broadcast(socket, d.data.from);
 		};
 
 		// Handle handshake event on RTCPeerConnection
@@ -1070,7 +965,7 @@ var startStream = function(roomInfo) {
 				console.log(e)
 			}
 			channel.onmessage = function(e) {
-				console.log("getOffer peer DataChannelObject onmessage from: ", d.data.from);
+				console.log("getOffer peer DataChannelObject onmessage from: ", d.data.from)
 				console.log(e);
 				dataChannel.receiveMessage(d, e);
 			}
@@ -1150,10 +1045,7 @@ var startStream = function(roomInfo) {
 			// reset mem
 			VCBpeer = new Object();
 			Vpeer = new Object();
-			pptFiles = {
-				data: new Array(),
-				size: 0
-			}
+			presentation.reset();
 		}
 		else {
 			// Other user leave room
@@ -1166,33 +1058,6 @@ var startStream = function(roomInfo) {
 			// Append to chat list
 			$('#chat-list').prepend(leaveMessage)		
 		}
-	}
-
-	/**
-	 * Handle presentation data. Data recevied from websocket as base64
-	 * encoded image. Each data will then be parsed and stored on global
-	 * variables pptFiles as an array.
-	 */
-	var handleInitPresentation = function(d) {
-		var tmp = {data:d.data.file};
-		dataChannel.receiveMessage(d, tmp);
-		$('#slide-current').attr('src',pptFiles.data[0]);
-		$('#slide-current-num').html((currentSlide+1) + '/' + pptFiles.data.length);
-
-		$('#main-content').on('click', '#slide-current', function(e) {
-			$('#slide-current')[0].webkitRequestFullScreen();
-		});
-	}
-
-	/**
-	 * handle control signal from room creator on presentation object
-	 * There are two type of control signal, next and previous. This
-	 * control signal 
-	 */
-	var handleControlPresentation = function(d) {
-		currentSlide = d.data.page;
-		$('#slide-current-num').html((currentSlide+1) + '/' + pptFiles.data.length);
-		$('#slide-current').attr('src', pptFiles.data[currentSlide]);
 	}
 
 	/**
@@ -1303,8 +1168,8 @@ var startStream = function(roomInfo) {
 	socket.on('get-answer', handleGetAnswer);
 	socket.on('get-last-description', handleGetLastDescription);
 	socket.on('on-ice-candidate', handleOnIceCandidate);
-	socket.on('init-presentation', handleInitPresentation);
-	socket.on('control-presentation', handleControlPresentation);
+	socket.on('start-presentation', presentation.start);
+	socket.on('control-presentation', presentation.applyControl);
 	socket.on('leave-room', handleLeaveRoom);
 };
 

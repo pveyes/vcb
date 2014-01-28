@@ -868,6 +868,7 @@ p {
 	width: 400px;
 	height: 300px;
 	background: #222;
+	display: none;
 }
 
 #slide-control {

@@ -11,6 +11,12 @@ var dataChannel = (function() {
 	var dataChannel = {};
 
 	/**
+	 * Buffer for receiving message
+	 */
+
+	dataChannel.buffer = [];
+
+	/**
 	 * Message constructor
 	 */
 
@@ -44,22 +50,20 @@ var dataChannel = (function() {
 
 		if (cekMessage) {
 
-			var msgBuffer = [];
-
 			switch (msgObj.s) {
 				case 1:
-					msgBuffer[d.data.from] = msgObj.d;
+					dataChannel.buffer[d.data.from] = msgObj.d;
 					break;
 				case 2:
-					msgBuffer[d.data.from] += msgObj.d;
+					dataChannel.buffer[d.data.from] += msgObj.d;
 					break;
 				case 3:
-					msgBuffer[d.data.from] += msgObj.d;
-					dataChannel.joinMessage(d, msgBuffer[d.data.from], msgObj);
+					dataChannel.buffer[d.data.from] += msgObj.d;
+					dataChannel.joinMessage(d, dataChannel.buffer[d.data.from], msgObj);
 					break;
 				case 4:
-					msgBuffer[d.data.from] = msgObj.d;
-					dataChannel.joinMessage(d, msgBuffer[d.data.from], msgObj);
+					dataChannel.buffer[d.data.from] = msgObj.d;
+					dataChannel.joinMessage(d, dataChannel.buffer[d.data.from], msgObj);
 					break;
 				default:
 					console.log('Warning: No event handler for this message status: '+msgObj.s);
@@ -95,9 +99,11 @@ var dataChannel = (function() {
 
 				presentation.receive(index, slide);
 				break;
-			case 'e': null
+			case 'e':
+				return false;
 				break;
-			default: console.log('Warning: No event handling for this undefined message type :' + objectMessage.t)
+			default:
+				console.log('Warning: No event handling for this undefined message type :' + objectMessage.t)
 				break;
 		};
 	};

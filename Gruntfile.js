@@ -34,6 +34,7 @@ module.exports = function(grunt) {
 					  'src/js/recorderWebM.js',
 					  'src/js/dataChannel.js',
 					  'src/js/chat.js',
+					  'src/js/presentation.js',
 					  'src/js/stream.js' ]
 				}
 			}
