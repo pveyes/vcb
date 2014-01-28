@@ -250,6 +250,8 @@ var registerSocket = function() {
 	socket.on('create-room', initStream);
 	socket.on('list-room', showListRoom);
 	socket.on('status-stun', showStatusSTUN);
+
+	stream.setSocketSessionID(socket.socket.sessionid);
 }
 
 /**
@@ -508,8 +510,8 @@ var createRoom = function(e) {
 			video: true
 		}
 
-		var successCallback = function(stream) {
-			VCB.localStream = stream;
+		var successCallback = function(mediastream) {
+			stream.local = mediastream;
 			socket.emit('create-room', VCB.client, roomInfo);
 		}
 
@@ -608,12 +610,9 @@ var showListRoom = function(d) {
 		e.preventDefault()
 
 		// Clear previous media stream
-		if (VCB.localStream) {
-			VCB.localStream.stop();			
-		}
+		stream.stopLocalStream();
 
 		var roomID = this.id;
-		VCB.roomid = d.data;
 
 		var roomInfo;
 
@@ -628,10 +627,10 @@ var showListRoom = function(d) {
 			return false;
 		}
 
-		VCB.roomInfo = roomInfo;
+		stream.roomInfo = roomInfo;
 
-		var successCallback = function(stream) {
-			VCB.localStream = stream;
+		var successCallback = function(mediastream) {
+			stream.local = mediastream;
 			startStream(roomInfo);
 			socket.emit('join-room', roomID);
 		}
@@ -719,15 +718,15 @@ var startStream = function(roomInfo) {
 	// }
 
 	// template builder
-	var streamT = $('#stream-template').html()
-	streamT = streamT.replace('{{room_name}}', roomInfo.name)
-	streamT = streamT.replace('{{room_desc}}', roomInfo.desc) 
-	streamT = streamT.replace('{{room_speaker}}', roomInfo.creator.name)
-	$('#dashboard-content').html(streamT)
+	var streamTemplate = $('#stream-template').html()
+	streamTemplate = streamTemplate.replace('{{room_name}}', roomInfo.name)
+	streamTemplate = streamTemplate.replace('{{room_desc}}', roomInfo.desc) 
+	streamTemplate = streamTemplate.replace('{{room_speaker}}', roomInfo.creator.name)
+	$('#dashboard-content').html(streamTemplate)
 
-	var localStreamURL = window.URL.createObjectURL(VCB.localStream)
+	var localStreamURL = window.URL.createObjectURL(stream.local)
 
-	VCB.roomInfo = roomInfo;
+	stream.roomInfo = roomInfo;
 
 	if (roomInfo.creator.sessionID == socket.socket.sessionid) {
 		// current user is creator, initialize stream as primary stream
@@ -846,8 +845,9 @@ var startStream = function(roomInfo) {
 			presentation.broadcast(socket, d.data.from);
 		};
 
+		peer.addStream(stream.local);
+
 		// Handle handshake event on RTCPeerConnection
-		peer.addStream(VCB.localStream);
 		peer.onicecandidate = function(e){
 			console.log('Info: onicecandidate send from this PC to '+d.data.from); console.log(e);
 			var tmpCandidate = {
@@ -911,8 +911,10 @@ var startStream = function(roomInfo) {
 		// Create RTCPeerConnection
 		VCBpeer[d.data.from].peer = new webkitRTCPeerConnection(null,{optional: [{RtpDataChannels: true}]});
 		var peer = VCBpeer[d.data.from].peer;
+
+		peer.addStream(stream.local);
+		
 		// Handle event on RTCPeerConnection
-		peer.addStream(VCB.localStream);
 		peer.onicecandidate = function(e){
 			console.log('Info: onicecandidate send from this PC to '+d.data.from); console.log(e);
 			var tmpCandidate = {
@@ -941,7 +943,7 @@ var startStream = function(roomInfo) {
 			VCBpeer[d.data.from].remoteStream = e;
 
 			var newStreamURL = window.URL.createObjectURL(e.stream)
-			if (d.data.from == roomInfo.creator.sessionID) {
+			if (d.data.from == stream.roomInfo.creator.sessionID) {
 				initMainStream(newStreamURL);
 			}
 			else {
@@ -1040,7 +1042,7 @@ var startStream = function(roomInfo) {
 	var handleLeaveRoom = function(d) {
 		// stop local stream
 		if (d.creator == d.client || d.client == socket.socket.session) {
-			VCB.localStream.stop()
+			stream.stopLocalStream();
 			$('#dashboard-content').html($('#dashboard-home-template').html())
 			// reset mem
 			VCBpeer = new Object();
@@ -1072,11 +1074,11 @@ var startStream = function(roomInfo) {
 		var control = $(this).attr('data-control');
 
 		var streamToRecord,
-			creatorSessionID = VCB.roomInfo.creator.sessionID,
+			creatorSessionID = stream.roomInfo.creator.sessionID,
 			currentSessionID = socket.socket.sessionid;
 
 		if (creatorSessionID == currentSessionID) {
-			streamToRecord = VCB.localStream;
+			streamToRecord = stream.local;
 		}
 		else {
 			streamToRecord = VCBpeer[creatorSessionID].remoteStream.stream;
@@ -1125,7 +1127,7 @@ var startStream = function(roomInfo) {
  */
 var leaveRoom = function() {
 	socket.emit('leave-room');
-	VCB.localStream.stop();
+	stream.stopLocalStream();
 };
 
 /**
@@ -1139,16 +1141,12 @@ var initStream = function(d) {
 	// check whether CREATE_ROOM request is valid
 	if (d.status == true) {
 
-		VCB.roomid = d.roomInfo.id;
-		VCB.roomInfo = d.roomInfo;
+		stream.roomInfo = d.roomInfo;
 
 		startStream(d.roomInfo);
 	}
 	else {
-		if (VCB.localStream) {
-			VCB.localStream.stop();
-			VCB.localStream = undefined;
-		}
+		stream.stopLocalStream();
 
 		// request is not valid or there's an error
 		// display the error to user
