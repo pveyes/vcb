@@ -35,6 +35,7 @@ module.exports = function(grunt) {
 					  'src/js/dataChannel.js',
 					  'src/js/chat.js',
 					  'src/js/presentation.js',
+					  'src/js/recorder.js',
 					  'src/js/stream.js' ]
 				}
 			}

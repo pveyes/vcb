@@ -1061,48 +1061,6 @@ var startStream = function(roomInfo) {
 	}
 
 	/**
-	 * Record current stream (video on creator), start encoding and wait
-	 * until stop() function is invoked. Stream is recorded from the moment
-	 * user click on RECORD button, not from ROOM_CREATED event
-	 */
-	var recordStream = function(stream) {
-		if (VCB.recorder) {
-			// check existing record system
-			return true;
-		}
-		else {
-			var streamToRecord,
-				creatorSessionID = VCB.roomInfo.creator.sessionID,
-				currentSessionID = socket.socket.sessionid;
-
-			if (creatorSessionID == currentSessionID) {
-				streamToRecord = VCB.localstream;
-			}
-			else {
-				streamToRecord = VCBpeer[creatorSessionID].remoteStream.stream;
-			}
-
-			console.log(streamToRecord);
-
-			VCB.recorder = new recordWebM(streamToRecord);
-			VCB.recorder.init();
-		}
-	}
-
-	/**
-	 * Stop current stream recorder, and save the stream files in disk
-	 */
-	var stopRecordStream = function() {
-		if (VCB.recorder) {
-			VCB.recorder.stop();
-			VCB.recorder = undefined;
-		}
-		else {
-			return false;
-		}
-	}
-
-	/**
 	 * Event listener on record stream button
 	 *
 	 * Prevent button default behavior, change button to STOP button, and invoke
@@ -1113,14 +1071,18 @@ var startStream = function(roomInfo) {
 		e.preventDefault();
 		var control = $(this).attr('data-control');
 
-		if (control == 'record') {
-			$(this).removeClass('record-button').addClass('stop-button').html('Stop').attr('data-control', 'stop');
-			recordStream();
+		var streamToRecord,
+			creatorSessionID = VCB.roomInfo.creator.sessionID,
+			currentSessionID = socket.socket.sessionid;
+
+		if (creatorSessionID == currentSessionID) {
+			streamToRecord = VCB.localStream;
 		}
 		else {
-			$(this).removeClass('stop-button').addClass('record-button').html('Record').attr('data-control', 'record');
-			stopRecordStream();			
+			streamToRecord = VCBpeer[creatorSessionID].remoteStream.stream;
 		}
+
+		recorder.control(control, streamToRecord);
 	});
 
 	/**
