@@ -36,7 +36,7 @@ module.exports = function(grunt) {
 					  'src/js/chat.js',
 					  'src/js/presentation.js',
 					  'src/js/recorder.js',
-					  'src/js/stream.js' ]
+					  'src/js/vcb.js' ]
 				}
 			}
 		}
