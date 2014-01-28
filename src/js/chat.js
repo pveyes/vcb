@@ -30,13 +30,36 @@ var chat = (function($, dataChannel) {
 	};
 
 	/**
-	 * Send chat data to other client
+	 * Validate chat message and send to all clients
 	 *
-	 * @param client 	client datachannel
-	 * @param text	 	textarea
+	 * @param clients 	client list
+	 * @param message	chat message
 	 */
 
-	chat.send = function(client, message) {
+	chat.send = function(clients, message) {
+		// Validate message
+		if (message.length > 0) {
+			// place message directly on sender chat list
+			chat.receive("You", message);
+
+			// send chat message to every clients
+			for (var client in clients) {
+				chat.sendMessage(clients[client].datachannel, message);
+			}
+		}
+		else {
+			// display error to user
+		}
+	}
+
+	/**
+	 * Send chat message using data channel
+	 *
+	 * @param client	client identifier
+	 * @param message	chat message
+	 */
+
+	chat.sendMessage = function(client, message) {
 		// message valid, construct new message data channel
 		var data = new dataChannel.msgConstructor(message);
 		data.t = 'c';

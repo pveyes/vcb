@@ -1132,29 +1132,13 @@ var startStream = function(roomInfo) {
 	 */
 	$('#main-content').on('submit', '#chat', function(e) {
 		// Prevent HTTP POST request
-		e.preventDefault()
+		e.preventDefault();
 
 		// read chat message from textarea
 		var message = $('#chatbox')[0];
 
-		// Validate message
-		if (message.value.length > 0) {
-			// place chat directly on current user (no need to wait for broadcast)
-			// prepent (not append) to reverse-sort chat list
-			var chatTemplate = $('#chat-template').html()
-			chatTemplate = chatTemplate.replace('{{name}}', VCB.client.name);
-			chatTemplate = chatTemplate.replace('{{message}}', message.value);
-			$('#chat-list').prepend(chatTemplate);
-
-			// send every client in peer list chat message. Data sent
-			// via message data channel object
-			for (var client in VCBpeer) {
-				chat.send(VCBpeer[client].datachannel, message.value);
-			}
-		}
-		else {
-			// display error to user
-		}
+		// send!
+		chat.send(VCBpeer, message.value);
 
 		// reset textarea value
 		message.value = null;
