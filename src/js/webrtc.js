@@ -75,6 +75,109 @@ var webrtc = (function() {
 	};
 
 	/**
+	 * handle askOffer
+	 */
+
+	webrtc.handleAskOffer = function(d) {
+		// Send notification to clients
+		// New client join, add notification on chat list
+		var joinMessage = $('#join-room-message-template').html().replace('{{name}}', d.data.client.name)
+		$('#chat-list').prepend(joinMessage)
+
+		// Create RTCPeerConnection
+		webrtc.peers[d.data.from] = new webrtc.peerConstructor();
+		webrtc.peers[d.data.from].peer = new webkitRTCPeerConnection(null,{optional: [{RtpDataChannels: true}]});
+		var peer = webrtc.peers[d.data.from].peer;
+
+		// Create RTCDataChannel and 
+		// handle datachannel event on RTCDataChannel
+		webrtc.peers[d.data.from].datachannel = peer.createDataChannel(d.data.from,{reliable: true});
+		var channel = webrtc.peers[d.data.from].datachannel;
+
+		channel.onclose = function(e) {
+			console.log("DataChannelObject onclose from: ", d.data.from);
+			console.log(e);
+		};
+		channel.onerror = function(e) {
+			console.log("DataChannelObject onerror from: ", d.data.from);
+			console.log(e);
+		};
+		channel.onmessage = function(e) {
+			console.log("DataChannelObject onmessage from: ", d.data.from);
+			console.log(e);
+
+			dataChannel.receiveMessage(d,e);
+		};
+		channel.onopen = function(e) {
+			console.log("DataChannelObject onopen from: ", d.data.from);
+			console.log(e);
+
+			presentation.broadcast(socket, d.data.from);
+		};
+
+		peer.addStream(stream.local);
+
+		// Handle handshake event on RTCPeerConnection
+		peer.onicecandidate = function(e){
+			console.log('Info: onicecandidate send from this PC to: ', d.data.from);
+			console.log(e);
+
+			var tmpCandidate = {
+				candidate: e.candidate.candidate, 
+				sdpMLineIndex: e.candidate.sdpMLineIndex, 
+				sdpMid: e.candidate.sdpMid
+			};
+			var res = {
+				status: true,
+				data: {
+					from: this.id,
+					to: d.data.from,
+					candidate: tmpCandidate
+				}
+			};
+			socket.emit('on-ice-candidate',res);
+		};
+		peer.onsignalingstatechange = function(e) {
+			console.log('Info: onsignalingstatechange from: ', d.data.from);
+			console.log(e);
+		};
+		peer.oniceconnectionstatechange = function(e) {
+			console.log('Info: oniceconnectionstatechange from: ', d.data.from);
+			console.log(e);
+		};
+		peer.onaddstream = function(e) {
+			console.log('Info: onaddstream from: ', d.data.from);
+			console.log(e);
+
+			webrtc.peers[d.data.from].remoteStream = e;
+			var remoteStream = window.URL.createObjectURL(e.stream);
+			stream.initViewer(d.data.from, remoteStream, false);
+		};
+		peer.onremovestream = function(e) {
+			console.log('Info: onremovestream from: ', d.data.from);
+			console.log(e);
+		};
+		peer.createOffer(function(e) {
+			console.log('Info: createOffer from this PC to: ', d.data.from);
+			console.log(e);
+
+			webrtc.peers[d.data.from].session.local = e;
+			var res = {
+				status: true,
+				data:{
+					//from:d.data.to,
+					to: d.data.from,
+					session: {
+						sdp: e.sdp,
+						type: e.type
+					}
+				}
+			};
+			socket.emit('get-offer', res);
+		});
+	};
+
+	/**
 	 * handle getOffer
 	 */
 

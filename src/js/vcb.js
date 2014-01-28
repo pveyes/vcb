@@ -255,7 +255,7 @@ var registerSocket = function() {
 	 * WebRTC default relay
 	 */
 
-	socket.on('ask-offer', handleAskOffer);
+	socket.on('ask-offer', webrtc.handleAskOffer);
 	socket.on('get-offer', webrtc.handleGetOffer);
 	socket.on('get-answer', webrtc.handleGetAnswer);
 	socket.on('get-last-description', webrtc.handleGetLastDescription);
@@ -686,41 +686,6 @@ var statusSTUN = function() {
 }
 
 /**
- * Initialize stream in main mode, used to display primary stream from creator
- */
-var initMainStream = function(localStreamURL) {
-	var mainStream = $('#stream')[0];
-	mainStream.autoplay = true;
-	mainStream.mute = true;
-	mainStream.src = localStreamURL;
-}
-
-/**
- * Initialize stream in viewer mode, used when another user is joined to
- * room. If current user is join, his/her video is muted to prevent
- * feedback noise
- */
-var initNewStream = function(remoteSessionID, newStreamURL, muted) {
-	// Create new stream element on video tag
-	var streamRemote = document.createElement('video');
-
-	// Set stream element parameters
-	streamRemote.id = remoteSessionID;
-	streamRemote.className = 'stream--remote';
-	streamRemote.autoplay = true;
-	streamRemote.src = newStreamURL;
-
-	// Check whether existing stream is from current user to prevent
-	// feedback noise using mute as default
-	if (muted == true) {
-		streamRemote.mute = true;
-	}
-
-	// Append stream element on peer list
-	$('#peer-stream').append(streamRemote); 
-}
-
-/**
  * Start stream using WebRTC
  *
  * Display stream page, initialize local stream, presentation slide, and data channel
@@ -728,17 +693,6 @@ var initNewStream = function(remoteSessionID, newStreamURL, muted) {
  * signal
  */
 var startStream = function(roomInfo) {
-
-	// add alert before reload
-	// window.onbeforeunload = function(e) {
-	// 	e = e || window.event;
-
-	// 	if (e) {
-	// 		e.returnValue = "You're leaving this room if you reload page";
-	// 	}
-
-	// 	return "You're leaving this room if you reload page";
-	// }
 
 	// template builder
 	var streamTemplate = $('#stream-template').html()
@@ -754,7 +708,7 @@ var startStream = function(roomInfo) {
 	if (roomInfo.creator.sessionID == socket.socket.sessionid) {
 		// current user is creator, initialize stream as primary stream
 		// and mute his/her own stream to remove feedback noise
-		initMainStream(localStreamURL)
+		stream.initCreator(localStreamURL)
 		$('#stream').attr('muted','yes');
 
 		presentation.init(socket, webrtc.peers);
@@ -776,7 +730,7 @@ var startStream = function(roomInfo) {
 	else {
 		// current user is not creator, place his/her stream as viewer mode
 		// and mute his/her stream to prevent feedback noise
-		initNewStream(socket.sessionID, localStreamURL, true);
+		stream.initViewer(socket.sessionID, localStreamURL, true);
 	}
 
 	/**
@@ -823,94 +777,6 @@ var startStream = function(roomInfo) {
 
 		// reset textarea value
 		message.value = null;
-	});
-};
-
-// Process RTCPeerConnection
-var handleAskOffer = function(d) {
-	// Send notification to clients
-	// New client join, add notification on chat list
-	var joinMessage = $('#join-room-message-template').html().replace('{{name}}', d.data.client.name)
-	$('#chat-list').prepend(joinMessage)
-
-	// Create RTCPeerConnection
-	webrtc.peers[d.data.from] = new webrtc.peerConstructor();
-	webrtc.peers[d.data.from].peer = new webkitRTCPeerConnection(null,{optional: [{RtpDataChannels: true}]});
-	var peer = webrtc.peers[d.data.from].peer;
-
-	// Create RTCDataChannel and 
-	// handle datachannel event on RTCDataChannel
-	webrtc.peers[d.data.from].datachannel = peer.createDataChannel(d.data.from,{reliable: true});
-	var channel = webrtc.peers[d.data.from].datachannel;
-	channel.onclose = function(e) {
-		console.log("DataChannelObject onclose from: " + d.data.from);
-		console.log(e);
-	};
-	channel.onerror = function(e) {
-		console.log("DataChannelObject onerror from: " + d.data.from);
-		console.log(e);
-	};
-	channel.onmessage = function(e) {
-		console.log("DataChannelObject onmessage from: " + d.data.from);
-		console.log(e);
-		dataChannel.receiveMessage(d,e);
-	};
-	channel.onopen = function(e) {
-		console.log("DataChannelObject onopen from: " + d.data.from);
-		console.log(e);
-		presentation.broadcast(socket, d.data.from);
-	};
-
-	peer.addStream(stream.local);
-
-	// Handle handshake event on RTCPeerConnection
-	peer.onicecandidate = function(e){
-		console.log('Info: onicecandidate send from this PC to '+d.data.from); console.log(e);
-		var tmpCandidate = {
-			candidate:e.candidate.candidate, 
-			sdpMLineIndex:e.candidate.sdpMLineIndex, 
-			sdpMid:e.candidate.sdpMid
-		};
-		var res = {
-			status:true,
-			data:{
-				from:this.id,
-				to:d.data.from,
-				candidate:tmpCandidate
-			}
-		};
-		socket.emit('on-ice-candidate',res);
-	};
-	peer.onsignalingstatechange = function(e){
-		console.log('Info: onsignalingstatechange from '+d.data.from); console.log(e);
-	};
-	peer.oniceconnectionstatechange = function(e){
-		console.log('Info: oniceconnectionstatechange from '+d.data.from); console.log(e);
-	};
-	peer.onaddstream = function(e){
-		console.log('Info: onaddstream from '+d.data.from); console.log(e);
-		webrtc.peers[d.data.from].remoteStream = e;
-		var remoteStream = window.URL.createObjectURL(e.stream);
-		initNewStream(d.data.from, remoteStream, false);
-	};
-	peer.onremovestream = function(e){
-		console.log('Info: onremovestream from '+d.data.from); console.log(e);
-	};
-	peer.createOffer(function(e){
-		console.log('Info: createOffer from this PC to '+d.data.from); console.log(e);
-		webrtc.peers[d.data.from].session.local = e;
-		var res = {
-			status:true,
-			data:{
-				//from:d.data.to,
-				to:d.data.from,
-				session:{
-					sdp:e.sdp,
-					type:e.type
-				}
-			}
-		};
-		socket.emit('get-offer', res);
 	});
 };
 
