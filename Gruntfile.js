@@ -37,6 +37,7 @@ module.exports = function(grunt) {
 					  'src/js/presentation.js',
 					  'src/js/recorder.js',
 					  'src/js/stream.js',
+					  'src/js/webrtc.js',
 					  'src/js/vcb.js' ]
 				}
 			}

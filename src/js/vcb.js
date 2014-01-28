@@ -251,6 +251,29 @@ var registerSocket = function() {
 	socket.on('list-room', showListRoom);
 	socket.on('status-stun', showStatusSTUN);
 
+	/**
+	 * WebRTC default relay
+	 */
+
+	socket.on('ask-offer', handleAskOffer);
+	socket.on('get-offer', handleGetOffer);
+	socket.on('get-answer', webrtc.handleGetAnswer);
+	socket.on('get-last-description', webrtc.handleGetLastDescription);
+	socket.on('on-ice-candidate', webrtc.handleOnIceCandidate);
+	socket.on('leave-room', handleLeaveRoom);
+
+	/**
+	 * Control signal relay on presentation slides
+	 */
+
+	socket.on('start-presentation', presentation.start);
+	socket.on('control-presentation', presentation.applyControl);
+
+	/**
+	 * Pointer to websocket connection
+	 */
+
+	webrtc.attachSocket(socket);
 	stream.setSocketSessionID(socket.socket.sessionid);
 }
 
@@ -734,7 +757,7 @@ var startStream = function(roomInfo) {
 		initMainStream(localStreamURL)
 		$('#stream').attr('muted','yes');
 
-		presentation.init(socket, VCBpeer);
+		presentation.init(socket, webrtc.peers);
 
 		/**
 		 * Event listener for presentation slide control signal.
@@ -747,319 +770,13 @@ var startStream = function(roomInfo) {
 			e.preventDefault();
 			var controlSignal = $(this).attr('data-control');
 
-			presentation.control(controlSignal, socket, VCBpeer);
+			presentation.control(controlSignal, socket, webrtc.peers);
 		});
 	}
 	else {
 		// current user is not creator, place his/her stream as viewer mode
 		// and mute his/her stream to prevent feedback noise
 		initNewStream(socket.sessionID, localStreamURL, true);
-	}
-
-	/** Constructor for VCBpeer.${clientID} Object
-	** @return {session:{local,remote},peer,datachannel}
-	 */
-	var VCBpeerConstructor = function(){
-		return{
-			session: {
-				local:null,
-				remote:null
-			},
-			peer: null,
-			datachannel: null       
-		}
-	};
-
-	/** Constructor for VCBpeer.${clientID} Object
-	** @param @data object of {t,l,p,s,d}
-	** @return DataChannel message object of {t,l,p,s,d}
-	**      @t type message [c,p]
-	**          @c chat type
-	**          @p file presentation type
-	**          @e other event type
-	**      @l number split message for message length > buffer length of DataChannel
-	**      @p part of number. Value various from 1 to @l
-	**      @s status of message. 
-	**          0:error message; 
-	**          1:start part messages; 
-	**          2:part of messages; 
-	**          3:last part messages;
-	**          4:single message
-	**      @d data of message
-	 */
-
-	var msgDataChannelConstructor = function(data) {
-		var tmp = data || new Object;
-		return {
-			t: tmp.t||null,
-			l: tmp.l||null,
-			p: tmp.p||null,
-			s: tmp.s||null,
-			d: tmp.d||null
-		};
-	};
-
-	/** VCBpeer Object contain SDP and RTCPeerConnection object connectiong to other clients
-	** @structure {@clientID:{session:{local,remote},peer,datachannel}}
-	** @param @clientID client.session (on STUN server) of remote client connected. Its index of this Object
-	** @param @local SDP that set to RTCPeerConnection.setLocalDescription()
-	** @param @remote SDP that set to RTCPeerConnection.setRemoteDescription()
-	** @param @peer RTCPeerConnection object created to connect with client @clientID
-	** @param @datachannel RTCDataChannel object created by RTCPeerConnection.createDataChannel() method
-	 */
-	var VCBpeer = new Object();
-	Vpeer = VCBpeer;
-
-	// Process RTCPeerConnection
-	var handleAskOffer = function(d) {
-		// Send notification to clients
-		// New client join, add notification on chat list
-		var joinMessage = $('#join-room-message-template').html().replace('{{name}}', d.data.client.name)
-		$('#chat-list').prepend(joinMessage)
-
-		// Create RTCPeerConnection
-		VCBpeer[d.data.from] = new VCBpeerConstructor();
-		VCBpeer[d.data.from].peer = new webkitRTCPeerConnection(null,{optional: [{RtpDataChannels: true}]});
-		var peer = VCBpeer[d.data.from].peer;
-
-		// Create RTCDataChannel and 
-		// handle datachannel event on RTCDataChannel
-		VCBpeer[d.data.from].datachannel = peer.createDataChannel(d.data.from,{reliable: true});
-		var channel = VCBpeer[d.data.from].datachannel;
-		channel.onclose = function(e) {
-			console.log("DataChannelObject onclose from: " + d.data.from);
-			console.log(e);
-		};
-		channel.onerror = function(e) {
-			console.log("DataChannelObject onerror from: " + d.data.from);
-			console.log(e);
-		};
-		channel.onmessage = function(e) {
-			console.log("DataChannelObject onmessage from: " + d.data.from);
-			console.log(e);
-			dataChannel.receiveMessage(d,e);
-		};
-		channel.onopen = function(e) {
-			console.log("DataChannelObject onopen from: " + d.data.from);
-			console.log(e);
-			presentation.broadcast(socket, d.data.from);
-		};
-
-		peer.addStream(stream.local);
-
-		// Handle handshake event on RTCPeerConnection
-		peer.onicecandidate = function(e){
-			console.log('Info: onicecandidate send from this PC to '+d.data.from); console.log(e);
-			var tmpCandidate = {
-				candidate:e.candidate.candidate, 
-				sdpMLineIndex:e.candidate.sdpMLineIndex, 
-				sdpMid:e.candidate.sdpMid
-			};
-			var res = {
-				status:true,
-				data:{
-					from:this.id,
-					to:d.data.from,
-					candidate:tmpCandidate
-				}
-			};
-			socket.emit('on-ice-candidate',res);
-		};
-		peer.onsignalingstatechange = function(e){
-			console.log('Info: onsignalingstatechange from '+d.data.from); console.log(e);
-		};
-		peer.oniceconnectionstatechange = function(e){
-			console.log('Info: oniceconnectionstatechange from '+d.data.from); console.log(e);
-		};
-		peer.onaddstream = function(e){
-			console.log('Info: onaddstream from '+d.data.from); console.log(e);
-			VCBpeer[d.data.from].remoteStream = e;
-			var remoteStream = window.URL.createObjectURL(e.stream);
-			initNewStream(d.data.from, remoteStream, false);
-		};
-		peer.onremovestream = function(e){
-			console.log('Info: onremovestream from '+d.data.from); console.log(e);
-		};
-		peer.createOffer(function(e){
-			console.log('Info: createOffer from this PC to '+d.data.from); console.log(e);
-			VCBpeer[d.data.from].session.local = e;
-			var res = {
-				status:true,
-				data:{
-					//from:d.data.to,
-					to:d.data.from,
-					session:{
-						sdp:e.sdp,
-						type:e.type
-					}
-				}
-			};
-			socket.emit('get-offer', res);
-		});
-	};
-	var handleGetOffer = function(d) {
-		if (d.data.client.sessionID != socket.socket.sessionid) {
-			// Send notification to clients
-			// New client join
-			var joinMessage = $('#join-room-message-template').html().replace('{{name}}', d.data.client.name)
-			// Append to chat list
-			$('#chat-list').prepend(joinMessage)            
-		}
-
-		console.log('Info: handleGetOffer with input param @d:'); console.log(d);
-		VCBpeer[d.data.from] = new VCBpeerConstructor();
-		// Create RTCPeerConnection
-		VCBpeer[d.data.from].peer = new webkitRTCPeerConnection(null,{optional: [{RtpDataChannels: true}]});
-		var peer = VCBpeer[d.data.from].peer;
-
-		peer.addStream(stream.local);
-		
-		// Handle event on RTCPeerConnection
-		peer.onicecandidate = function(e){
-			console.log('Info: onicecandidate send from this PC to '+d.data.from); console.log(e);
-			var tmpCandidate = {
-				candidate:e.candidate.candidate, 
-				sdpMLineIndex:e.candidate.sdpMLineIndex, 
-				sdpMid:e.candidate.sdpMid
-			};
-			var res = {
-				status:true,
-				data:{
-					//from:this.id,
-					to:d.data.from,
-					candidate:tmpCandidate
-				}
-			};
-			socket.emit('on-ice-candidate',res);
-		};
-		peer.onsignalingstatechange = function(e){
-			console.log('Info: onsignalingstatechange from '+d.data.from); console.log(e);
-		};
-		peer.oniceconnectionstatechange = function(e){
-			console.log('Info: oniceconnectionstatechange from '+d.data.from); console.log(e);
-		};
-		peer.onaddstream = function(e) {
-			console.log('Info: onaddstream from ', d); console.log(e);
-			VCBpeer[d.data.from].remoteStream = e;
-
-			var newStreamURL = window.URL.createObjectURL(e.stream)
-			if (d.data.from == stream.roomInfo.creator.sessionID) {
-				initMainStream(newStreamURL);
-			}
-			else {
-				initNewStream(d.data.from, newStreamURL, false);
-			}
-		}
-
-		peer.onremovestream = function(e){
-			console.log('Info: onremovestream from '+d.data.from); console.log(e);
-		};
-		peer.ondatachannel = function(e) {
-			console.log('Info: ondatachannel from '+d.data.from); console.log(e);
-			VCBpeer[d.data.from].datachannel = e.channel;
-			var channel = e.channel;
-			channel.onclose = function(e) {
-				console.log("getOffer peer DataChannelObject onclose from: ", d.data.from)
-				console.log(e)
-			}
-			channel.onerror = function(e) {
-				console.log("getOffer peer DataChannelObject onerror from: ", d.data.from)
-				console.log(e)
-			}
-			channel.onmessage = function(e) {
-				console.log("getOffer peer DataChannelObject onmessage from: ", d.data.from)
-				console.log(e);
-				dataChannel.receiveMessage(d, e);
-			}
-			channel.onopen = function(e) {
-				console.log("getOffer peer DataChannelObject onopen", d);
-				console.log(e)
-			}
-		};
-		// Process input SDP
-		var SessionDescription = new RTCSessionDescription({
-									sdp:d.data.session.sdp, 
-									type:d.data.session.type
-								});
-		VCBpeer[d.data.from].session.remote = SessionDescription;
-		peer.setRemoteDescription(SessionDescription);
-		peer.createAnswer(function(e){
-			console.log('Info: createAnswer from this PC to '+d.data.from); console.log(e);
-			VCBpeer[d.data.from].session.local = e;
-			var res = {
-				status:true,
-				data:{
-					//from:this.id,
-					to:d.data.from,
-					session:{
-						sdp:e.sdp,
-						type:e.type
-					}
-				}
-			};
-			socket.emit('get-answer',res);
-		});
-	};
-
-	var handleGetAnswer = function(d){
-		console.log('Info: handleGetAnswer with input param @d:');
-		var peer = VCBpeer[d.data.from].peer;
-		var SessionDescription = new RTCSessionDescription({
-									sdp:d.data.session.sdp,
-									type:d.data.session.type
-								});
-		VCBpeer[d.data.from].session.remote = SessionDescription;
-		peer.setLocalDescription(VCBpeer[d.data.from].session.local);
-		peer.setRemoteDescription(VCBpeer[d.data.from].session.remote);
-		var res = {
-			status:true,
-			data:{
-				//from:this.id,
-				to:d.data.from
-			}
-		};
-		socket.emit('get-last-description',res);
-	};
-
-	var handleGetLastDescription = function(d){
-		console.log('Info: handleGetLastDescription with input param @d:'); console.log(d);
-		var peer = VCBpeer[d.data.from].peer;
-		peer.setLocalDescription(VCBpeer[d.data.from].session.local);
-	};
-
-	var handleOnIceCandidate = function(d){
-		console.log('Info: handleOnIceCandidate with input param @d:'); console.log(d);
-		var peer = VCBpeer[d.data.from].peer;
-		var IceCandidate = new RTCIceCandidate(d.data.candidate);
-		peer.addIceCandidate(IceCandidate);
-	}
-
-	/**
-	 * Handle display on room is destroyed. Room can be destroyed because of
-	 * 2 reasons, the creator left, or current user left. Reset HTML DOM to
-	 * initial state, which is dashboard page.
-	 */
-	var handleLeaveRoom = function(d) {
-		// stop local stream
-		if (d.creator == d.client || d.client == socket.socket.session) {
-			stream.stopLocalStream();
-			$('#dashboard-content').html($('#dashboard-home-template').html())
-			// reset mem
-			VCBpeer = new Object();
-			Vpeer = new Object();
-			presentation.reset();
-		}
-		else {
-			// Other user leave room
-			// Update DOM to remove user video
-			$('#' + d.client).remove()
-			VCBpeer[d.client] = undefined;
-
-			// Prepare leavemessage
-			var leaveMessage = $('#leave-room-message-template').html().replace('{{name}}', d.name)
-			// Append to chat list
-			$('#chat-list').prepend(leaveMessage)		
-		}
 	}
 
 	/**
@@ -1081,7 +798,7 @@ var startStream = function(roomInfo) {
 			streamToRecord = stream.local;
 		}
 		else {
-			streamToRecord = VCBpeer[creatorSessionID].remoteStream.stream;
+			streamToRecord = webrtc.peers[creatorSessionID].remoteStream.stream;
 		}
 
 		recorder.control(control, streamToRecord);
@@ -1102,24 +819,232 @@ var startStream = function(roomInfo) {
 		var message = $('#chatbox')[0];
 
 		// send!
-		chat.send(VCBpeer, message.value);
+		chat.send(webrtc.peers, message.value);
 
 		// reset textarea value
 		message.value = null;
 	});
-	/**
-	 * Register websocket with any other connection types which are available
-	 * after initial connection is established (room created)
-	 */
-	socket.on('ask-offer', handleAskOffer);
-	socket.on('get-offer', handleGetOffer);
-	socket.on('get-answer', handleGetAnswer);
-	socket.on('get-last-description', handleGetLastDescription);
-	socket.on('on-ice-candidate', handleOnIceCandidate);
-	socket.on('start-presentation', presentation.start);
-	socket.on('control-presentation', presentation.applyControl);
-	socket.on('leave-room', handleLeaveRoom);
 };
+
+// Process RTCPeerConnection
+var handleAskOffer = function(d) {
+	// Send notification to clients
+	// New client join, add notification on chat list
+	var joinMessage = $('#join-room-message-template').html().replace('{{name}}', d.data.client.name)
+	$('#chat-list').prepend(joinMessage)
+
+	// Create RTCPeerConnection
+	webrtc.peers[d.data.from] = new webrtc.peerConstructor();
+	webrtc.peers[d.data.from].peer = new webkitRTCPeerConnection(null,{optional: [{RtpDataChannels: true}]});
+	var peer = webrtc.peers[d.data.from].peer;
+
+	// Create RTCDataChannel and 
+	// handle datachannel event on RTCDataChannel
+	webrtc.peers[d.data.from].datachannel = peer.createDataChannel(d.data.from,{reliable: true});
+	var channel = webrtc.peers[d.data.from].datachannel;
+	channel.onclose = function(e) {
+		console.log("DataChannelObject onclose from: " + d.data.from);
+		console.log(e);
+	};
+	channel.onerror = function(e) {
+		console.log("DataChannelObject onerror from: " + d.data.from);
+		console.log(e);
+	};
+	channel.onmessage = function(e) {
+		console.log("DataChannelObject onmessage from: " + d.data.from);
+		console.log(e);
+		dataChannel.receiveMessage(d,e);
+	};
+	channel.onopen = function(e) {
+		console.log("DataChannelObject onopen from: " + d.data.from);
+		console.log(e);
+		presentation.broadcast(socket, d.data.from);
+	};
+
+	peer.addStream(stream.local);
+
+	// Handle handshake event on RTCPeerConnection
+	peer.onicecandidate = function(e){
+		console.log('Info: onicecandidate send from this PC to '+d.data.from); console.log(e);
+		var tmpCandidate = {
+			candidate:e.candidate.candidate, 
+			sdpMLineIndex:e.candidate.sdpMLineIndex, 
+			sdpMid:e.candidate.sdpMid
+		};
+		var res = {
+			status:true,
+			data:{
+				from:this.id,
+				to:d.data.from,
+				candidate:tmpCandidate
+			}
+		};
+		socket.emit('on-ice-candidate',res);
+	};
+	peer.onsignalingstatechange = function(e){
+		console.log('Info: onsignalingstatechange from '+d.data.from); console.log(e);
+	};
+	peer.oniceconnectionstatechange = function(e){
+		console.log('Info: oniceconnectionstatechange from '+d.data.from); console.log(e);
+	};
+	peer.onaddstream = function(e){
+		console.log('Info: onaddstream from '+d.data.from); console.log(e);
+		webrtc.peers[d.data.from].remoteStream = e;
+		var remoteStream = window.URL.createObjectURL(e.stream);
+		initNewStream(d.data.from, remoteStream, false);
+	};
+	peer.onremovestream = function(e){
+		console.log('Info: onremovestream from '+d.data.from); console.log(e);
+	};
+	peer.createOffer(function(e){
+		console.log('Info: createOffer from this PC to '+d.data.from); console.log(e);
+		webrtc.peers[d.data.from].session.local = e;
+		var res = {
+			status:true,
+			data:{
+				//from:d.data.to,
+				to:d.data.from,
+				session:{
+					sdp:e.sdp,
+					type:e.type
+				}
+			}
+		};
+		socket.emit('get-offer', res);
+	});
+};
+
+var handleGetOffer = function(d) {
+	if (d.data.client.sessionID != socket.socket.sessionid) {
+		// Send notification to clients
+		// New client join
+		var joinMessage = $('#join-room-message-template').html().replace('{{name}}', d.data.client.name)
+		// Append to chat list
+		$('#chat-list').prepend(joinMessage)            
+	}
+
+	console.log('Info: handleGetOffer with input param @d:'); console.log(d);
+	webrtc.peers[d.data.from] = new webrtc.peerConstructor();
+	// Create RTCPeerConnection
+	webrtc.peers[d.data.from].peer = new webkitRTCPeerConnection(null,{optional: [{RtpDataChannels: true}]});
+	var peer = webrtc.peers[d.data.from].peer;
+
+	peer.addStream(stream.local);
+	
+	// Handle event on RTCPeerConnection
+	peer.onicecandidate = function(e){
+		console.log('Info: onicecandidate send from this PC to '+d.data.from); console.log(e);
+		var tmpCandidate = {
+			candidate:e.candidate.candidate, 
+			sdpMLineIndex:e.candidate.sdpMLineIndex, 
+			sdpMid:e.candidate.sdpMid
+		};
+		var res = {
+			status:true,
+			data:{
+				//from:this.id,
+				to:d.data.from,
+				candidate:tmpCandidate
+			}
+		};
+		socket.emit('on-ice-candidate',res);
+	};
+	peer.onsignalingstatechange = function(e){
+		console.log('Info: onsignalingstatechange from '+d.data.from); console.log(e);
+	};
+	peer.oniceconnectionstatechange = function(e){
+		console.log('Info: oniceconnectionstatechange from '+d.data.from); console.log(e);
+	};
+	peer.onaddstream = function(e) {
+		console.log('Info: onaddstream from ', d); console.log(e);
+		webrtc.peers[d.data.from].remoteStream = e;
+
+		var newStreamURL = window.URL.createObjectURL(e.stream)
+		if (d.data.from == stream.roomInfo.creator.sessionID) {
+			initMainStream(newStreamURL);
+		}
+		else {
+			initNewStream(d.data.from, newStreamURL, false);
+		}
+	}
+
+	peer.onremovestream = function(e){
+		console.log('Info: onremovestream from '+d.data.from); console.log(e);
+	};
+	peer.ondatachannel = function(e) {
+		console.log('Info: ondatachannel from '+d.data.from); console.log(e);
+		webrtc.peers[d.data.from].datachannel = e.channel;
+		var channel = e.channel;
+		channel.onclose = function(e) {
+			console.log("getOffer peer DataChannelObject onclose from: ", d.data.from)
+			console.log(e)
+		}
+		channel.onerror = function(e) {
+			console.log("getOffer peer DataChannelObject onerror from: ", d.data.from)
+			console.log(e)
+		}
+		channel.onmessage = function(e) {
+			console.log("getOffer peer DataChannelObject onmessage from: ", d.data.from)
+			console.log(e);
+			dataChannel.receiveMessage(d, e);
+		}
+		channel.onopen = function(e) {
+			console.log("getOffer peer DataChannelObject onopen", d);
+			console.log(e)
+		}
+	};
+	// Process input SDP
+	var SessionDescription = new RTCSessionDescription({
+								sdp:d.data.session.sdp, 
+								type:d.data.session.type
+							});
+	webrtc.peers[d.data.from].session.remote = SessionDescription;
+	peer.setRemoteDescription(SessionDescription);
+	peer.createAnswer(function(e){
+		console.log('Info: createAnswer from this PC to '+d.data.from); console.log(e);
+		webrtc.peers[d.data.from].session.local = e;
+		var res = {
+			status:true,
+			data:{
+				//from:this.id,
+				to:d.data.from,
+				session:{
+					sdp:e.sdp,
+					type:e.type
+				}
+			}
+		};
+		socket.emit('get-answer',res);
+	});
+};
+
+/**
+ * Handle display on room is destroyed. Room can be destroyed because of
+ * 2 reasons, the creator left, or current user left. Reset HTML DOM to
+ * initial state, which is dashboard page.
+ */
+var handleLeaveRoom = function(d) {
+	// stop local stream
+	if (d.creator == d.client || d.client == socket.socket.session) {
+		stream.stopLocalStream();
+		$('#dashboard-content').html($('#dashboard-home-template').html())
+		// reset mem
+		webrtc.resetPeers();
+		presentation.reset();
+	}
+	else {
+		// Other user leave room
+		// Update DOM to remove user video
+		$('#' + d.client).remove()
+		webrtc.removePeers(d.client);
+
+		// Prepare leavemessage
+		var leaveMessage = $('#leave-room-message-template').html().replace('{{name}}', d.name)
+		// Append to chat list
+		$('#chat-list').prepend(leaveMessage)		
+	}
+}
+
 
 /**
  * Leave room, send signal to STUN server and stop localstream
