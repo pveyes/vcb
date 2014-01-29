@@ -10,6 +10,8 @@ var dataChannel = (function() {
 
 	var dataChannel = {};
 
+	console.log('Initializing dataChannel API');
+
 	/**
 	 * Buffer for receiving message
 	 */
@@ -21,7 +23,7 @@ var dataChannel = (function() {
 	 */
 
 	dataChannel.msgConstructor = function(data) {
-		var tmp = data || new Object;
+		var tmp = data || {};
 		return {
 			t: tmp.t || null,
 			l: tmp.l || null,
@@ -42,11 +44,11 @@ var dataChannel = (function() {
 		var cekMessage;
 
 		if (msgObj) {
-			cekMessage = msgObj.t && msgObj.l && msgObj.p && msgObj.s &&msgObj.d
+			cekMessage = msgObj.t && msgObj.l && msgObj.p && msgObj.s && msgObj.d;
 		}
 		else{
 			cekMessage = false;
-		};
+		}
 
 		if (cekMessage) {
 
@@ -68,7 +70,7 @@ var dataChannel = (function() {
 				default:
 					console.log('Warning: No event handler for this message status: '+msgObj.s);
 					break;
-			};
+			}
 		}
 		else {
 			console.log('Error: Wrong format data message received');
@@ -83,29 +85,31 @@ var dataChannel = (function() {
 	 */
 
 	dataChannel.joinMessage = function(d, joinMessage, objectMessage){
+		var message;
+
 		switch(objectMessage.t) {
 			case 'c': 
 				// Chat
-				var sender = d.data.client.name,
-					message = joinMessage;
+				var sender = d.data.client.name;
+				message = joinMessage;
 
 				chat.receive(sender, message);
 				break;
 			case 'p':
 				// Presentation
-				var message = JSON.parse(joinMessage),
-					index = parseInt(message.p),
+				message = JSON.parse(joinMessage);
+
+				var index = parseInt(message.p),
 					slide = message.f;
 
 				presentation.receive(index, slide);
 				break;
 			case 'e':
-				return false;
 				break;
 			default:
-				console.log('Warning: No event handling for this undefined message type :' + objectMessage.t)
+				console.log('Warning: No event handling for this undefined message type :', objectMessage.t);
 				break;
-		};
+		}
 	};
 
 	
@@ -142,12 +146,12 @@ var dataChannel = (function() {
 						res.s = 2;
 						break;
 				}
-			};
+			}
 
 			res.d = data.d.slice(positionEnd-msgBuffer,positionEnd);
 			channel.send(JSON.stringify(res));
-		};
-	}
+		}
+	};
 
 	return dataChannel;
 

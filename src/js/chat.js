@@ -1,10 +1,8 @@
 /**
  * Chat API
- *
- * Require: jQuery
  */
 
-var chat = (function($, dataChannel) {
+var chat = (function(dataChannel) {
 	
 	/**
 	 * Namespace
@@ -12,28 +10,24 @@ var chat = (function($, dataChannel) {
 
 	var chat = {};
 
+	console.log('Initializing chat API');
+
 	/**
 	 * Receive chat from sender, append to chat list in reverse order
 	 *
-	 * @param sender	sender name
-	 * @param message	message text
+	 * @param	string		sender name
+	 * @param	string		message text
 	 */
 
 	chat.receive = function(sender, message) {
-		// Parse data into HTML
-		var chatTemplate = $('#chat-template').html();
-		chatTemplate = chatTemplate.replace('{{name}}', sender);
-		chatTemplate = chatTemplate.replace('{{message}}', message);
-
-		// Prepend data into DOM
-		$('#chat-list').prepend(chatTemplate);
+		dashboard.renderChat(sender, message);
 	};
 
 	/**
 	 * Validate chat message and send to all clients
 	 *
-	 * @param clients 	client list
-	 * @param message	chat message
+	 * @param	array		client list
+	 * @param	string		chat message
 	 */
 
 	chat.send = function(clients, message) {
@@ -44,19 +38,21 @@ var chat = (function($, dataChannel) {
 
 			// send chat message to every clients
 			for (var client in clients) {
-				chat.sendMessage(clients[client].datachannel, message);
+				if (clients[client]) {
+					chat.sendMessage(clients[client].datachannel, message);					
+				}
 			}
 		}
 		else {
 			// display error to user
 		}
-	}
+	};
 
 	/**
 	 * Send chat message using data channel
 	 *
-	 * @param client	client identifier
-	 * @param message	chat message
+	 * @param	datachannel	client identifier
+	 * @param	string		chat message
 	 */
 
 	chat.sendMessage = function(client, message) {
@@ -71,4 +67,4 @@ var chat = (function($, dataChannel) {
 
 	return chat;
 
-})(jQuery, dataChannel);
+})(dataChannel);

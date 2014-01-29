@@ -1,16 +1,18 @@
 /**
  * Presentation API
  *
- * Require: jQuery, dataChannel
+ * Require: dataChannel
  */
 
-var presentation = (function($, dataChannel) {
+var presentation = (function(dataChannel) {
 
 	/**
 	 * Namespace
 	 */
 
 	var presentation = {};
+
+	console.log('Initializing presentation API');
 
 	/**
 	 * Current slide indicator
@@ -45,7 +47,7 @@ var presentation = (function($, dataChannel) {
 		presentation.currentSlide = 0;
 		presentation.totalSlide = 0;
 		presentation.size = 0;
-	}
+	};
 
 	/**
 	 * Add slides to presentation data
@@ -54,8 +56,8 @@ var presentation = (function($, dataChannel) {
 	presentation.addSlide = function(slide) {
 		presentation.slides.push(slide);
 		presentation.totalSlide += 1;
-		presentation.size += slide.length
-	}
+		presentation.size += slide.length;
+	};
 
 	/**
 	 * Init presentation (creator) and add event listener
@@ -71,7 +73,6 @@ var presentation = (function($, dataChannel) {
 		if (presentation.currentSlide == presentation.totalSlide-1) {
 			$('#slide-control-next').addClass('disabled');
 		}
-
 	};
 
 	/**
@@ -108,7 +109,7 @@ var presentation = (function($, dataChannel) {
 		if (presentation.currentSlide > 0) {
 			$('#slide-control-prev').removeClass('disabled');
 		}
-		if (presentation.currentSlide == 0) {
+		if (presentation.currentSlide === 0) {
 			$('#slide-control-prev').addClass('disabled');
 		}
 		if (presentation.currentSlide < presentation.totalSlide-1) {
@@ -122,14 +123,17 @@ var presentation = (function($, dataChannel) {
 		$('#slide-current').attr('src', presentation.slides[presentation.currentSlide]);
 
 		for (var client in clients){
-			var d = {
-				data: {
-					to: client,
-					page: presentation.currentSlide
-				}
+			if (client) {			
+				var d = {
+					data: {
+						to: client,
+						page: presentation.currentSlide
+					}
+				};
+
+				console.log('sending control signal to client ', client);
+				socket.emit('control-presentation', d);
 			}
-			console.log('sending control signal to client ', client);
-			socket.emit('control-presentation', d);
 		}
 	};
 
@@ -139,14 +143,16 @@ var presentation = (function($, dataChannel) {
 
 	presentation.broadcast = function(socket, clientID) {
 		for (var i in presentation.slides) {
-			var msg = new dataChannel.msgConstructor();
-			msg.t = 'p';
-			data = {
-				f: presentation.slides[i],	// base64-decoded image of slide
-				p: i 						// current slide indicator
-			};
-			msg.d = JSON.stringify(data);
-			presentation.send(socket, clientID, msg);
+			if (presentation.slides[i]) {
+				var msg = new dataChannel.msgConstructor();
+				msg.t = 'p';
+				data = {
+					f: presentation.slides[i],	// base64-decoded image of slide
+					p: i						// current slide indicator
+				};
+				msg.d = JSON.stringify(data);
+				presentation.send(socket, clientID, msg);				
+			}
 		}
 	};
 
@@ -175,18 +181,19 @@ var presentation = (function($, dataChannel) {
 			}
 			else {
 				//splited message
-				switch(i){
+				switch(i) {
 					case 1:
 						res.s = 1;
 						break;
 					case res.l:
 						res.s = 3;
-						break
+						break;
 					default:
-						res.s = 2 ;
+						res.s = 2;
 						break;
 				}
-			};
+			}
+
 			res.d = msgFile.d.slice(positionEnd-msgBuffer, positionEnd);
 			d.data.file = JSON.stringify(res);
 			socket.emit('init-presentation', d);
@@ -202,13 +209,13 @@ var presentation = (function($, dataChannel) {
 		presentation.totalSlide += 1;
 		presentation.size += slide.length;
 
-		if (index == 0) {
+		if (index === 0) {
 			// Initialize current slide indicator
 			$('#slide-current').attr('src', presentation.slides[0]).show();
 
 			// Attach full-screen event listener on click
-			$('#main-content').on('click', '#slide-current', function(e) {
-				$('#slide-current')[0].webkitRequestFullScreen();
+			$('#main-content').on('click', '#slide-current', function() {
+				$('#slide-current')[0].webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
 			});
 		}
 	};
@@ -224,7 +231,7 @@ var presentation = (function($, dataChannel) {
 			data: d.data.file
 		};
 
-		if (d.status == true) {
+		if (d.status === true) {
 			dataChannel.receiveMessage(d, tmp);
 
 			// Presentation data is sent partially, periodically update DOM
@@ -248,8 +255,8 @@ var presentation = (function($, dataChannel) {
 		currentSlide = d.data.page;
 		$('#slide-current-num').html((currentSlide+1) + '/' + presentation.totalSlide);
 		$('#slide-current').attr('src', presentation.slides[currentSlide]);
-	}
+	};
 
 	return presentation;
 
-})(jQuery, dataChannel);
+})(dataChannel);

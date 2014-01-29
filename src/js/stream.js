@@ -10,6 +10,8 @@ var stream = (function(window) {
 
 	var stream = {};
 
+	console.log('Initializing stream API');
+
 	/**
 	 * Local stream
 	 */
@@ -23,41 +25,6 @@ var stream = (function(window) {
 	stream.roomInfo = {};
 
 	/**
-	 * Initialize creator stream
-	 */
-
-	stream.initCreator = function(stream) {
-		var mainStream = $('#stream')[0];
-		mainStream.autoplay = true;
-		mainStream.mute = true;
-		mainStream.src = stream;
-	}
-
-	/**
-	 * Initialize stream in viewer mode, used when another user is joined to
-	 * room. If current user is joined, his/her video is muted to prevent
-	 * feedback noise
-	 */
-
-	stream.initViewer = function(clientID, stream, muted) {
-		// Create new stream element on video tag
-		var viewerStream = document.createElement('video');
-		viewerStream.id = clientID;
-		viewerStream.className = 'stream--remote';
-		viewerStream.autoplay = true;
-		viewerStream.src = stream;
-
-		// Check whether existing stream is from current user to prevent
-		// feedback noise using mute as default
-		if (muted == true) {
-			viewerStream.mute = true;
-		}
-
-		// Append stream element on peer list
-		$('#peer-stream').append(viewerStream); 
-	}
-
-	/**
 	 * Display stream page, initialize local stream, presentation slide, and data channel
 	 * also contain event listener for recording function, chat, and presentation control
 	 * signal
@@ -66,23 +33,14 @@ var stream = (function(window) {
 
 		var roomInfo = stream.roomInfo;
 
-		// template builder
-		var streamTemplate = $('#stream-template').html()
-		streamTemplate = streamTemplate.replace('{{room_name}}', roomInfo.name)
-		streamTemplate = streamTemplate.replace('{{room_desc}}', roomInfo.desc) 
-		streamTemplate = streamTemplate.replace('{{room_speaker}}', roomInfo.creator.name)
-		$('#dashboard-content').html(streamTemplate);
-
-		console.log('starting to stream');
-		console.log(stream.local);
+		dashboard.renderStreamPage(roomInfo);
 
 		var localStreamURL = window.URL.createObjectURL(stream.local);
 
 		if (roomInfo.creator.sessionID == stun.socket.socket.sessionid) {
 			// current user is creator, initialize stream as primary stream
 			// and mute his/her own stream to remove feedback noise
-			stream.initCreator(localStreamURL)
-			$('#stream').attr('muted','yes');
+			dashboard.renderCreatorStream(localStreamURL);
 
 			presentation.init();
 
@@ -103,7 +61,7 @@ var stream = (function(window) {
 		else {
 			// current user is not creator, place his/her stream as viewer mode
 			// and mute his/her stream to prevent feedback noise
-			stream.initViewer(stun.socket.socket.sessionid, localStreamURL, true);
+			dashboard.renderViewerStream(stun.socket.socket.sessionid, localStreamURL, true);
 		}
 
 		/**
@@ -166,8 +124,8 @@ var stream = (function(window) {
 		}
 
 		stream.roomInfo = {};
-	}
+	};
 
 	return stream;
 
-})(window)
+})(window);

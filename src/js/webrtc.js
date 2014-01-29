@@ -10,6 +10,8 @@ var webrtc = (function() {
 
 	var webrtc = {};
 
+	console.log('Initializing WebRTC API');
+
 	/**
 	 * Peer lists
 	 * Peers object contain SDP and RTCPeerConnection object connectiong to other clients
@@ -96,7 +98,7 @@ var webrtc = (function() {
 			console.log("DataChannelObject onopen from: ", d.data.from);
 			console.log(e);
 
-			presentation.broadcast(socket, d.data.from);
+			presentation.broadcast(stun.socket, d.data.from);
 		};
 
 		peer.addStream(stream.local);
@@ -135,7 +137,7 @@ var webrtc = (function() {
 
 			webrtc.peers[d.data.from].remoteStream = e;
 			var remoteStream = window.URL.createObjectURL(e.stream);
-			stream.initViewer(d.data.from, remoteStream, false);
+			dashboard.renderViewerStream(d.data.from, remoteStream, false);
 		};
 		peer.onremovestream = function(e) {
 			console.log('Info: onremovestream from: ', d.data.from);
@@ -218,10 +220,10 @@ var webrtc = (function() {
 			var newStreamURL = window.URL.createObjectURL(e.stream)
 
 			if (d.data.from == stream.roomInfo.creator.sessionID) {
-				stream.initCreator(newStreamURL);
+				dashboard.renderCreatorStream(newStreamURL);
 			}
 			else {
-				stream.initViewer(d.data.from, newStreamURL, false);
+				dashboard.renderViewerStream(d.data.from, newStreamURL, false);
 			}
 		}
 		peer.onremovestream = function(e){

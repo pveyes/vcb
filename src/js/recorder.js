@@ -1,10 +1,10 @@
 /**
  * Recorder Helper API
  *
- * Require: jQuery, WebMRecorder
+ * Require: WebMRecorder
  */
 
-var recorder = (function($, WebMrecorder) {
+var recorder = (function(WebMrecorder) {
 	
 	/**
 	 * Namespace
@@ -12,11 +12,13 @@ var recorder = (function($, WebMrecorder) {
 
 	var recorder = {};
 
+	console.log('Initializing recorder API');
+
 	/**
 	 * Recorder library
 	 */
 
-	recorder.lib = undefined
+	recorder.lib = undefined;
 
 	/**
 	 * Record current stream (video on creator), start encoding and wait
@@ -35,7 +37,7 @@ var recorder = (function($, WebMrecorder) {
 			recorder.lib = new WebMrecorder(stream);
 			recorder.lib.init();
 		}
-	}
+	};
 
 	/**
 	 * Stop current stream recorder, and save the stream files in disk
@@ -71,4 +73,4 @@ var recorder = (function($, WebMrecorder) {
 
 	return recorder;
 
-})(jQuery, recordWebM);
+})(recordWebM);

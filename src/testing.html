@@ -4,11 +4,39 @@
 		<title>VCB Home</title>
 	</head>
 
-	<link rel="stylesheet" type="text/css" href="/public/style.min.css">
+	<link rel="stylesheet" type="text/css" href="css/animate.css">
+	<link rel="stylesheet" type="text/css" href="css/style.css">
 
 	<div id="main-content" class="dashboard animated fadeIn">
-		<div class="loading-spinner iconb"></div>
+		<div id="dashboard-info" class="dashboard-info no-select animated fadeIn">
+			<a id="logout" href="/logout" class="button logout">Logout</a>
+			<div class="user-info">
+				<div class="user-avatar icon"></div>
+				<h2>{{user}}</h2>
+			</div>
+			<ul class="devices-info info-container">
+				<h3>Device Info</h3>
+				<li id="display-info" class="device-info {{display-status}}">Display</li>
+				<li id="camera-info" class="device-info {{camera-status}}">Camera</li>
+				<li id="audio-in-info" class="device-info {{audio-in-status}}">Audio In</li>
+				<li id="audio-out-info" class="device-info {{audio-out-status}}">Audio Out</li>
+			</ul>
+			<div class="misc-info info-container">
+				<h3 id="stun-info" class="device-info check change-stun-button">STUN Server</h3>
+				<span>{{stun-server}}</span>
+			</div>
+			<div class="misc-info info-container">
+				<h3>Your IP Address</h3>
+				<span id="client-ip">{{client-ip}}</span>
+			</div>
+		</div>
+		<div id="dashboard-content" data-default="dashboard-home-template" class="dashboard-content animated fadeIn">		
+			<div class="container cf animated fadeIn">
+			</div>
+		</div>
+		<div id="popup"></div>
 	</div>
+
 	<div id="message" class="page-message"></div>
 
 	<script type="text/template" id="login-template">
@@ -52,30 +80,7 @@
 	</script>
 
 	<script type="text/template" id="dashboard-template">
-		<div id="dashboard-info" class="dashboard-info no-select animated fadeIn">
-			<a id="logout" href="/logout" class="button logout">Logout</a>
-			<div class="user-info">
-				<div class="user-avatar icon"></div>
-				<h2>{{user}}</h2>
-			</div>
-			<ul class="devices-info info-container">
-				<h3>Device Info</h3>
-				<li id="display-info" class="device-info {{display-status}}">Display</li>
-				<li id="camera-info" class="device-info {{camera-status}}">Camera</li>
-				<li id="audio-in-info" class="device-info {{audio-in-status}}">Audio In</li>
-				<li id="audio-out-info" class="device-info {{audio-out-status}}">Audio Out</li>
-			</ul>
-			<div class="misc-info info-container">
-				<h3 id="stun-info" class="device-info check change-stun-button">STUN Server</h3>
-				<span>{{stun-server}}</span>
-			</div>
-			<div class="misc-info info-container">
-				<h3>Your IP Address</h3>
-				<span id="client-ip">{{client-ip}}</span>
-			</div>
-		</div>
-		<div id="dashboard-content" data-default="dashboard-home-template" class="dashboard-content animated fadeIn"></div>
-		<div id="popup"></div>
+
 	</script>
 
 	<script type="text/template" id="dashboard-home-template">
@@ -128,21 +133,11 @@
 	</script>
 
 	<script type="text/template" id="join-room-template">
-		<div class="container cf animated fadeIn">
-			<h1>Room List</h1>
-			<a href="#" id="join-room-cancel">Return to dashboard</a>
-			<ul id="room-list"></ul>
-		</div>
+
 	</script>
 
 	<script type="text/template" id="list-room-template">
-		<li class="room-list">
-			<span class="room-list-visitor-count">{{room_visitor}}</span>
-			<h3 class="room-list-name">{{room_name}}</h3>
-			<strong class="room-list-speaker">By: {{room_creator}}</strong>
-			<p>{{room_desc}}</p>
-		<a href="#" id="{{room_id}}" class="room-join-button">Join</a>
-		</li>
+
 	</script>
 
 	<script type="text/template" id="stream-template">
@@ -189,44 +184,6 @@
 		</div>
 	</script>
 
-	<script type="text/template" id="device-select-template">
-		<div id="device-select">
-
-			<h1>Select Device</h1>
-			<a href="#" id="device-select-cancel">Return to dashboard</a>
-
-			<div class="device-selects cf">
-				<div class="device-select">
-					<strong class="device-select-title">Select your camera input</strong>
-
-					<select id="device-select-camera" class="device-select-option">
-						<option disabled="disabled" selected="selected">Select your camera input</option>
-					</select>
-
-					<div class="device-preview">
-						<video id="device-camera-preview"></video>
-					</div>
-				</div>
-
-				<div class="device-select">
-					<strong class="device-select-title">Select your audio input</strong>
-
-					<select id="device-select-audio" class="device-select-option">
-						<option disabled="disabled" selected="selected">Select your audio input</option>
-					</select>
-
-					<div class="device-preview">
-						<canvas id="device-audio-preview"></canvas>
-					</div>
-				</div>
-			</div>
-		</div>
-	</script>
-
-	<script type="text/template" id="device-select-item">
-		<option id="{{item_id}}" value="{{item_val}}" {{item_select}}>{{item_name}}</option>
-	</script>
-
 	<script type="text/template" id="chat-template">
 		<li class="chat-message animated fadeIn">
 			<strong>{{name}}</strong>
@@ -245,6 +202,4 @@
 			<strong>{{name}} joined this room</strong>
 		</li>
 	</script>
-
-	<script type="text/javascript" src="/public/script.min.js"></script>
 </html>

@@ -28,10 +28,7 @@ module.exports = function(grunt) {
 				},
 				files: {
 					'app/public/script.min.js': 
-					[ 'src/js/socket.io.js',
-					  'src/js/jquery.js',
-					  'src/js/NgisX.js',
-					  'src/js/recorderWebM.js',
+					[ 'src/js/lib/*.js',
 					  'src/js/dataChannel.js',
 					  'src/js/chat.js',
 					  'src/js/presentation.js',
@@ -39,8 +36,9 @@ module.exports = function(grunt) {
 					  'src/js/stream.js',
 					  'src/js/webrtc.js',
 					  'src/js/stun.js',
+					  'src/js/helper.js',
 					  'src/js/dashboard.js',
-					  'src/js/lib.js',
+  					  'src/js/eventListener.js',
 					  'src/js/main.js' ]
 				}
 			}
