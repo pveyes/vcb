@@ -42,7 +42,12 @@ var stun = (function(io) {
 
 		stun.socket.on('connect', function() {
 			// save stun server selection on localstorage
-			chrome.storage.local.set({'stun': stunServer});
+			if (chrome.storage) {
+				chrome.storage.local.set({'stun': stunServer});			
+			}
+			else {
+				localstorage.setItem('stun', stunServer);
+			}
 
 			// register socket to listen event
 			stun.register();
@@ -95,7 +100,14 @@ var stun = (function(io) {
 		if (stun.socket) {
 			stun.socket.disconnect();
 			stun.socket = undefined;
-			chrome.storage.local.remove('stun');
+
+		}
+
+		if (chrome.storage) {
+			chrome.storage.local.remove('stun');				
+		}
+		else {
+			localStorage.removeItem('stun');
 		}
 
 		dashboard.renderSelectSTUN();

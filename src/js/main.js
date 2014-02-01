@@ -14,32 +14,37 @@ var client = {};
 
 console.log('Starting application...');
 
-chrome.storage.local.get(['user', 'stun'], function(data) {
-	console.log('Receiving value from local storage...');
+var init = function(userName, stunServer) {
+
+	// initialize client
+	client = {
+		name: undefined,
+		uid: guid(),
+		version: '3.1',
+		input: {
+			audio: undefined,
+			video: undefined
+		}
+	};
 
 	// Check if data on localstorage exists
-	if (typeof data.user !== 'undefined') {
+	if (typeof userName === 'undefined' || userName == null) {
+		// show authenticated page
+		console.log('Local storage data is not received, displaying auth page');
+		dashboard.renderAuthPage();
+	}
+	else {
 		// initialize client and stun server
-		console.log('Local storage data received from ' + data.user + ', generating client object and STUN server');
+		console.log('Local storage data received from ' + userName + ', generating client object and STUN server');
 
-		client = {
-			name: data.user,
-			uid: guid(),
-			version: '3.1',
-			input: {
-				audio: {},
-				video: {}
-			}
-		};
-
-		console.log('client object created: ', client);
+		client.name = userName;
 
 		/**
 		 * STUN server initialization. Check STUN server selection from localstorage,
 		 * if exists check connection via websocket, if not display STUN server selection
 		 * page on DOM
 		 */
-		if (typeof data.stun === 'undefined') {
+		if (typeof stunServer === 'undefined' || stunServer == null) {
 			// No stun server defined
 			// Display stun server selection
 			console.log('STUN server has not defined. Displaying STUN server selection page');
@@ -48,14 +53,22 @@ chrome.storage.local.get(['user', 'stun'], function(data) {
 		else {
 			// STUN server already defined
 			// Initialize connection via websocket
-			console.log('STUN server is already defined: ', data.stun);
-			stun.connect(data.stun);
-		}	
+			console.log('STUN server is already defined: ', stunServer);
+			stun.connect(stunServer);
+		}
 	}
-	else {
-		// show authenticated page
-		console.log('Local storage data is not received, displaying auth page');
-		dashboard.renderAuthPage();
-	}
-	
-});
+}
+
+if (chrome.storage) {
+	chrome.storage.local.get(['user', 'stun'], function(data) {
+		console.log('Receiving value from chrome apps storage...');
+		init(data.user, data.stun);
+	});
+}
+else {
+	var user = localStorage.getItem('user'),
+		stun = localStorage.getItem('stun');
+
+	console.log('Receiving value from local storage...');
+	init (user, stun);
+}

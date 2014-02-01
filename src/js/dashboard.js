@@ -293,6 +293,7 @@ var dashboard = (function($) {
 
 			for (var i = 0; i < sources.length; i++) {
 				var source = sources[i];
+				console.log('source ' + source.kind + ': ', source);
 				if (source.kind === 'video') {
 					camera++;
 					dashboard.renderDeviceCameraItem(camera, source.id);
@@ -317,19 +318,17 @@ var dashboard = (function($) {
 
 	dashboard.renderDeviceCameraItem = function(id, deviceID) {
 		var deviceName = "Input Camera " + id,
-			options = $('#device-select-item').html()
+			options = document.getElementById('device-select-item').innerHTML;
 
 		options = options.replace('{{item_id}}', deviceID);
 		options = options.replace('{{item_val}}', deviceID);
 		options = options.replace('{{item_name}}', deviceName);
 
-		if (typeof client.input.video.optional !== 'undefined' && client.input.video.optional[0].sourceId == deviceID) {
-			console.log('item class selected');
-			options.replace('{{item_select}}', 'selected="selected"');
+		if (typeof client.input.video !== 'undefined' && client.input.video == deviceID) {
+			options = options.replace('{{item_select}}', 'selected="selected"');
 		}
 		else {
-			console.log('item class init');
-			options.replace('{{item_select}}', '');
+			options = options.replace('{{item_select}}', '');
 		}
 
 		$('#device-select-camera').append(options);
@@ -341,19 +340,17 @@ var dashboard = (function($) {
 
 	dashboard.renderDeviceAudioItem = function(id, deviceID) {
 		var deviceName = "Input Audio " + id,
-			options = $('#device-select-item').html()
+			options = document.getElementById('device-select-item').innerHTML;
 
 		options = options.replace('{{item_id}}', deviceID);
 		options = options.replace('{{item_val}}', deviceID);
 		options = options.replace('{{item_name}}', deviceName);
 
-		if (typeof client.input.audio.optional !== 'undefined' && client.input.audio.optional[0].sourceId == deviceID) {
-			console.log('item class selected');
-			options.replace('{{item_select}}', 'selected="selected"');
+		if (typeof client.input.audio !== 'undefined' && client.input.audio == deviceID) {
+			options = options.replace('{{item_select}}', 'selected="selected"');
 		}
 		else {
-			console.log('item class init');
-			options.replace('{{item_select}}', '');
+			options = options.replace('{{item_select}}', '');
 		}
 
 		$('#device-select-audio').append(options);
@@ -428,7 +425,14 @@ var dashboard = (function($) {
 		e.preventDefault();
 
 		// remove user & stun data from localstorage
-		chrome.storage.local.remove(['user', 'stun']);
+		if (chrome.storage) {
+			chrome.storage.local.remove('user');
+			chrome.storage.local.remove('stun');
+		}
+		else {
+			localStorage.removeItem('user');
+			localStorage.removeItem('stun');
+		}
 
 		// Display login page
 		dashboard.renderAuthPage();

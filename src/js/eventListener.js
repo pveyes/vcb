@@ -363,13 +363,14 @@ var eventListener = (function($) {
 
 	eventListener.previewCameraInput = function() {
 
-		var tempStream,
-			tempConstraints = {};
+		var tempStream;
 
-		$('#main-content').on('change', '#device-select-camera', function() {
+		var cameraSelector = document.querySelector("select#device-select-camera");
 
-			var cameraPreview = document.getElementById('device-camera-preview'),
-				deviceID = $(this).val();
+		document.getElementById('device-select-camera').onchange = function() {
+
+			var selectedCamera = this.value;
+			var cameraPreview = document.getElementById('device-camera-preview');
 
 			if (typeof tempStream !== 'undefined') {
 				tempStream.stop();
@@ -378,12 +379,6 @@ var eventListener = (function($) {
 			// Reset video tag
 			cameraPreview.pause();
 			cameraPreview.src = '';
-
-			tempConstraints.video = {
-				optional: [ {sourceId: deviceID} ]
-			};
-
-			console.log('Testing camera using device ', tempConstraints.video.optional[0].sourceId);
 
 			var successCallback = function(mediastream) {
 				console.log('new mediastream test ', mediastream);
@@ -399,8 +394,23 @@ var eventListener = (function($) {
 				console.log('Preview camera getUserMedia error ', e);
 			};
 
-			navigator.getUserMedia(tempConstraints, successCallback, errorCallback);			
-		});
+			var cameraSource  = cameraSelector.value;
+
+			console.log(cameraSource);
+
+			var constraints = {
+				audio: {
+					optional: [ { sourceId: client.input.audio } ]
+				},
+				video: {
+					optional: [ { sourceId: cameraSource } ]
+				}
+			}
+
+			console.log(constraints);
+
+			navigator.getUserMedia(constraints, successCallback, errorCallback);			
+		};
 	};
 
 	/**
@@ -451,9 +461,18 @@ var eventListener = (function($) {
 			// get user name and validate
 			var user = $('#user').val();
 			if (typeof user !== 'undefined' && user.length > 0) {
-				// assume user valid, save user name preferences in localstorage
-				var data = {'user':user};
-				chrome.storage.local.set(data);
+				// assume user valid, save user name preferences in memory 
+				client.name = user;
+
+				// also set in localstorage
+				if (chrome.storage) {
+					chrome.storage.local.set({'user': user});
+				}
+				else {
+					localStorage.setItem('user', user);
+				}
+
+				// next step, show STUN server selection
 				dashboard.renderSelectSTUN();
 			}
 			else {
