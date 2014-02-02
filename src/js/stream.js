@@ -25,6 +25,15 @@ var stream = (function(window) {
 	stream.roomInfo = {};
 
 	/**
+	 * getUserMedia device selection
+	 */
+
+	var constraints = {
+		audio: true,
+		video: true
+	};
+
+	/**
 	 * Display stream page, initialize local stream, presentation slide, and data channel
 	 * also contain event listener for recording function, chat, and presentation control
 	 * signal
@@ -124,6 +133,43 @@ var stream = (function(window) {
 		}
 
 		stream.roomInfo = {};
+	};
+
+	/**
+	 * Update user audio / microphone device selection
+	 */
+
+	stream.updateAudioConstraint = function (sourceId) {
+		// Update client information
+		client.input.audio = sourceId;
+
+		// Update getUserMedia constraint
+		constraints.audio = {
+			optional: [ { sourceId: client.input.audio } ]			
+		};
+	};
+
+	/**
+	 * Update user video / camera device selection
+	 */
+
+	stream.updateVideoConstraint = function (sourceId) {
+		// Update client information
+		client.input.video = sourceId;
+		
+		// Update getUserMedia constraint
+		constraints.video = {
+			optional: [ { sourceId: client.input.video } ]
+		};
+	};
+
+	/**
+	 * Get getUserMedia constraints parameter based on user input device selection
+	 */
+
+	stream.getConstraints = function () {
+		// getter
+		return constraints;
 	};
 
 	return stream;

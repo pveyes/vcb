@@ -192,7 +192,7 @@ var dashboard = (function($) {
 	 * Initialize stream from getUserMedia.
 	 *
 	 * Receiving data from websocket contains result from CREATE_ROOM form
-	 * If true, getUserMedia is invoked using constraint to make sure user
+	 * If true, getUserMedia is invoked using constraints to make sure user
 	 * has audio and video on their system to proceed to stream
 	 */
 
@@ -200,11 +200,7 @@ var dashboard = (function($) {
 		// check whether CREATE_ROOM request is valid
 		if (d.status === true) {
 
-			// request getUserMedia
-			var constraints = {
-				audio: true,
-				video: true
-			};
+			var constraints = stream.getConstraints();
 
 			var successCallback = function(mediastream) {
 				stream.local = mediastream;
