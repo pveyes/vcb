@@ -167,7 +167,7 @@ var dashboard = (function($) {
 
 		eventListener.register('local-playback-select');
 		eventListener.register('local-playback-submit');
-		eventListener.register('local-playback-close');
+		eventListener.register('local-playback-cancel');
 	};
 
 	/**
@@ -286,6 +286,9 @@ var dashboard = (function($) {
 		// Replace popup DOM with SELECT_DEVICE template
 		var deviceSelectTemplate = $('#device-select-template').html();
 		$('#dashboard-content').html(deviceSelectTemplate);
+
+		// enable back button
+		eventListener.register('select-device-cancel');
 
 		var populateForm = function(sources) {
 			var camera = 0,

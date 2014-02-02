@@ -354,7 +354,7 @@ var eventListener = (function($) {
 		$('#main-content').on('click', '#join-room-cancel', function() {
 			var defaultDashboardTemplate = $('#dashboard-home-template').html();
 			$('#dashboard-content').html(defaultDashboardTemplate);
-		});		
+		});
 	};
 
 	/**
@@ -444,6 +444,17 @@ var eventListener = (function($) {
 
 			navigator.getUserMedia(tempConstraints, successCallback, errorCallback);			
 		})
+	};
+
+	/**
+	 * Return to dashboard from SELECT_DEVICE page
+	 */
+
+	eventListener.selectDeviceCancel = function() {
+		$('#main-content').on('click', '#device-select-cancel', function() {
+			var defaultDashboardTemplate = $('#dashboard-home-template').html();
+			$('#dashboard-content').html(defaultDashboardTemplate);
+		});		
 	};
 
 	/**
