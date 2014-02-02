@@ -32,7 +32,9 @@
   "engines": {
     "node": ">=0.10"
   },
-  "engineStrict": true,
+  "files": [
+    "tweet-formatter.js"
+  ],
   "dependencies": {
     "express": "3.4.x",
     "socket.io": "0.9.x"

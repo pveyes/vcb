@@ -9,7 +9,11 @@ Enable these flag on `chrome://flags`
 - Experimental Extension APIs
 - Extensions on chrome:// URLs
 
-Open `chrome://extensions`, click **Load unpacked extension** and select `vcb/app` folder
+Open `chrome://extensions`, click **Load unpacked extension** and select `vcb/app` folder. Click Launch
+
+Start STUN server
+
+    node index.js
 
 ## Build
 
