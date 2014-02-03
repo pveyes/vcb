@@ -45,8 +45,7 @@ var init = function(userName, stunServer) {
 		 * page on DOM
 		 */
 		if (typeof stunServer === 'undefined' || stunServer == null) {
-			// No stun server defined
-			// Display stun server selection
+			// No stun server defined, display stun server selection
 			console.log('STUN server has not defined. Displaying STUN server selection page');
 			dashboard.renderSelectSTUN();
 		}
@@ -61,7 +60,7 @@ var init = function(userName, stunServer) {
 
 if (chrome.storage) {
 	chrome.storage.local.get(['user', 'stun'], function(data) {
-		console.log('Receiving value from chrome apps storage...');
+		console.log('Receiving value from chrome apps storage...', data);
 		init(data.user, data.stun);
 	});
 }
