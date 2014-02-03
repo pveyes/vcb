@@ -361,9 +361,9 @@ var eventListener = (function($) {
 	 * Preview camera in device select
 	 */
 
-	eventListener.previewCameraInput = function() {
+	var tempVideoStream, tempAudioStream;
 
-		var tempStream;
+	eventListener.previewCameraInput = function() {
 
 		var cameraSelector = document.querySelector("select#device-select-camera");
 
@@ -372,8 +372,8 @@ var eventListener = (function($) {
 			var selectedCamera = this.value;
 			var cameraPreview = document.getElementById('device-camera-preview');
 
-			if (typeof tempStream !== 'undefined') {
-				tempStream.stop();
+			if (typeof tempVideoStream !== 'undefined') {
+				tempVideoStream.stop();
 			}
 
 			// Reset video tag
@@ -381,27 +381,26 @@ var eventListener = (function($) {
 			cameraPreview.src = '';
 
 			var successCallback = function(mediastream) {
+				stream.updateVideoConstraint(selectedCamera);
+
+				console.log('select camera using ', selectedCamera);
 				console.log('new mediastream test ', mediastream);
 				console.log('new mediastream url ', window.URL.createObjectURL(mediastream));
 
-				tempStream = mediastream;
+				tempVideoStream = mediastream;
 
 				cameraPreview.src = window.URL.createObjectURL(mediastream);
 				cameraPreview.play();
 			};
 
 			var errorCallback = function(e) {
-				console.log('Preview camera getUserMedia error ', e);
+				console.log('Select camera getUserMedia error ', e);
 			};
 
 			var cameraSource  = cameraSelector.value;
 
-			console.log(cameraSource);
-
 			var constraints = {
-				audio: {
-					optional: [ { sourceId: client.input.audio } ]
-				},
+				audio: false,
 				video: {
 					optional: [ { sourceId: cameraSource } ]
 				}
@@ -452,6 +451,15 @@ var eventListener = (function($) {
 
 	eventListener.selectDeviceCancel = function() {
 		$('#main-content').on('click', '#device-select-cancel', function() {
+			// Stop current stream
+			if (tempVideoStream) {
+				tempVideoStream.stop();				
+			}
+
+			if (tempAudioStream) {
+				tempAudioStream.stop();
+			}
+
 			var defaultDashboardTemplate = $('#dashboard-home-template').html();
 			$('#dashboard-content').html(defaultDashboardTemplate);
 		});		
