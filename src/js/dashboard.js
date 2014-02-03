@@ -196,20 +196,20 @@ var dashboard = (function($) {
 	 * has audio and video on their system to proceed to stream
 	 */
 
-	dashboard.initStream = function(d) {
+	dashboard.initStream = function (d) {
 		// check whether CREATE_ROOM request is valid
 		if (d.status === true) {
 
 			var constraints = stream.getConstraints();
 
-			var successCallback = function(mediastream) {
+			var successCallback = function (mediastream) {
 				stream.local = mediastream;
 				stream.roomInfo = d.roomInfo;
 				console.log("Starting stream");
 				stream.start();
 			};
 
-			var errorCallback = function(error) {
+			var errorCallback = function (error) {
 				console.log('initStream error on getUserMedia: ', error);
 			};
 
@@ -470,7 +470,7 @@ var dashboard = (function($) {
 			// Other user leave room
 			// Update DOM to remove user video
 			$('#' + d.client).remove();
-			webrtc.removePeers(d.client);
+			webrtc.removePeer(d.client);
 
 			// Prepare leave message and add to chat list
 			var leaveMessage = $('#leave-room-message-template').html().replace('{{name}}', d.name);
