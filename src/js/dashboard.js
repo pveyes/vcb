@@ -455,7 +455,6 @@ var dashboard = (function($) {
 		var loginPage = $('#login-template').html();
 		$('#main-content').html(loginPage);
 
-		eventListener.clear('#main-content');
 		eventListener.register('auth-login-form');
 	};
 

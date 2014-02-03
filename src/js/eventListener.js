@@ -69,7 +69,9 @@ var eventListener = (function($) {
 		/**
 		 * Clear previous event listener
 		 */
+
 		eventListener.clear('#main-content');
+		eventListener.clear(document);
 
 		/**
 		 * Register event listener on main dashboard default action.
@@ -547,6 +549,14 @@ var eventListener = (function($) {
 	 */
 
 	eventListener.authLoginForm = function() {
+
+		/**
+		 * Clear previous event listener
+		 */
+
+		eventListener.clear('#main-content');
+		eventListener.clear(document);
+
 		$('#main-content').on('submit', '#login', function(e) {
 			// Prevent HTTP POST request
 			e.preventDefault();
