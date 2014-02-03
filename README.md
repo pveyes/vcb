@@ -2,7 +2,15 @@
 
 > Capstone Project. Video, Audio & Data Streaming + Storage
 
+## Overview
+
+My capstone project. Implementing video, audio, and data (presentation slide, chat) streaming using WebRTC and Websocket
+
 ## Start
+
+Install requirement
+
+    npm install
 
 Enable these flag on `chrome://flags`
 
@@ -17,7 +25,7 @@ Start STUN server
 
 ## Build
 
-Client side javascript and CSS must be built after edit. Grunt is used for build and must installed
+Client side javascript and CSS must be built after edit. Grunt is used for build and must be installed
 
     npm install -g grunt-cli
     grunt build
