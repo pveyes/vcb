@@ -29,26 +29,23 @@ var stun = (function(io) {
 	stun.connect = function(stunServer) {
 		console.log('Connecting STUN Server: ', stunServer);
 
-		if (typeof stun.socket === 'undefined') {
-			stun.socket = io.connect(stunServer);
-			stun.socket.socket.connect();
-		}
-		else {
-			stun.socket = io.connect(stunServer);
-		}
+		// reconnect stun
+		stun.socket = io.connect(stunServer);
+		stun.socket.socket.connect();
 
 		// wait response from socket server
 		dashboard.init(stunServer);
 
-		stun.socket.on('connect', function() {
-			// save stun server selection on localstorage
-			if (chrome.storage) {
-				chrome.storage.local.set({'stun': stunServer});			
-			}
-			else {
-				localstorage.setItem('stun', stunServer);
-			}
+		// Save to localStorage
+		if (chrome.storage) {
+			chrome.storage.local.set({'stun': stunServer});
+		}
+		else {
+			localstorage.setItem('stun', stunServer);
+		}
 
+
+		stun.socket.on('connect', function() {
 			// register socket to listen event
 			stun.register();
 

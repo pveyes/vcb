@@ -28,7 +28,7 @@ module.exports = function(grunt) {
 				},
 				files: {
 					'app/public/script.min.js': 
-					[ 'src/js/lib/*.js',
+					[ 'src/js/libs/*.js',
 					  'src/js/dataChannel.js',
 					  'src/js/chat.js',
 					  'src/js/presentation.js',
