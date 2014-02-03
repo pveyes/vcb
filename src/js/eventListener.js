@@ -158,7 +158,7 @@ var eventListener = (function($) {
 	 */
 
 	eventListener.localPlaybackSelect = function() {
-		$('#main-content').on('change', '#local-content-input', function() {
+		$('#main-content').one('change', '#local-content-input', function() {
 			var file = this.files[0];
 			var type = file.type;
 			var videoNode = document.getElementById('local-playback');
@@ -183,7 +183,7 @@ var eventListener = (function($) {
 	 */
 
 	eventListener.localPlaybackSubmit = function() {
-		$('#main-content').on('submit', '#local-content-form', function(e) {
+		$('#main-content').one('submit', '#local-content-form', function(e) {
 			e.preventDefault();
 			$('#local-playback-wrapper').show();
 			
@@ -201,7 +201,7 @@ var eventListener = (function($) {
 	 */
 
 	eventListener.localPlaybackCancel = function() {
-		$('#main-content').on('click', '.local-playback-close', function(e) {
+		$('#main-content').one('click', '.local-playback-close', function(e) {
 			e.preventDefault();
 
 			var defaultDashboardTemplate = $('#dashboard-home-template').html();

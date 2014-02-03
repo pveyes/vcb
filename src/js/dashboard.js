@@ -165,6 +165,11 @@ var dashboard = (function($) {
 		var localMediaPlayback = $('#local-playback-template').html();
 		$('#dashboard-content').html(localMediaPlayback);
 
+		/**
+		 * Register event listener for this layout
+		 * This page is executed without removing eventListener, so event
+		 * listener type is `one` not `on`
+		 */
 		eventListener.register('local-playback-select');
 		eventListener.register('local-playback-submit');
 		eventListener.register('local-playback-cancel');
@@ -182,7 +187,11 @@ var dashboard = (function($) {
 		var popupForm = $('#create-room-template').html();
 		$('#popup').html(popupForm);
 
-		// EVENT LISTENER ------------------------------------------------//
+		/**
+		 * Register event listener for this layout
+		 * This page is executed without removing eventListener, so event
+		 * listener type is `one` not `on`
+		 */
 		eventListener.register('create-room-submit');
 		eventListener.register('create-room-add-slides');
 		eventListener.register('create-room-cancel');
