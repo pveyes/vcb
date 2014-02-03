@@ -220,7 +220,8 @@ var webrtc = (function() {
 			var newStreamURL = window.URL.createObjectURL(e.stream)
 
 			if (d.data.from == stream.roomInfo.creator.sessionID) {
-				dashboard.renderCreatorStream(newStreamURL);
+				var muted = false;
+				dashboard.renderCreatorStream(newStreamURL, muted);
 			}
 			else {
 				dashboard.renderViewerStream(d.data.from, newStreamURL, false);

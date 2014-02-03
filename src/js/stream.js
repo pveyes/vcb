@@ -49,7 +49,8 @@ var stream = (function(window) {
 		if (roomInfo.creator.sessionID == stun.socket.socket.sessionid) {
 			// current user is creator, initialize stream as primary stream
 			// and mute his/her own stream to remove feedback noise
-			dashboard.renderCreatorStream(localStreamURL);
+			var muted = true;
+			dashboard.renderCreatorStream(localStreamURL, muted);
 
 			presentation.init();
 

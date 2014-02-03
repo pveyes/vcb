@@ -243,10 +243,10 @@ var dashboard = (function($) {
 	 * Render creator stream on stream page
 	 */
 
-	dashboard.renderCreatorStream = function(streamURL) {
+	dashboard.renderCreatorStream = function(streamURL, muted) {
 		var mainStream = $('#stream')[0];
 		mainStream.autoplay = true;
-		mainStream.mute = true;
+		mainStream.muted = muted;
 		mainStream.src = streamURL;
 	};
 
