@@ -65,8 +65,6 @@ var presentation = (function(dataChannel) {
 
 	presentation.init = function() {
 		if (presentation.totalSlide > 0) {
-			$('#slide').show();		
-
 			// Display first slide on stream page, and show current slide &
 			// total slides.
 			$('#slide-current').attr('src', presentation.slides[0]);
@@ -76,6 +74,10 @@ var presentation = (function(dataChannel) {
 			if (presentation.currentSlide == presentation.totalSlide-1) {
 				$('#slide-control-next').addClass('disabled');
 			}
+
+			// Display element
+			$('#slide-current').show();
+			$('#slide-control').show();
 		}
 	};
 
