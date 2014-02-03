@@ -440,33 +440,34 @@ var eventListener = (function($) {
 	 * Preview camera in device select
 	 */
 
-	var tempVideoStream, tempAudioStream;
-
 	eventListener.previewCameraInput = function() {
 
 		var cameraSelector = document.querySelector("select#device-select-camera");
 
 		document.getElementById('device-select-camera').onchange = function() {
 
-			var selectedCamera = this.value;
-			var cameraPreview = document.getElementById('device-camera-preview');
-
-			if (typeof tempVideoStream !== 'undefined') {
-				tempVideoStream.stop();
+			if (typeof stream.temp.video !== 'undefined') {
+				stream.temp.video.stop();
+				stream.temp.video = undefined;
 			}
 
 			// Reset video tag
+			var cameraPreview = document.getElementById('device-camera-preview');
 			cameraPreview.pause();
 			cameraPreview.src = '';
 
+			var constraints = {
+				audio: false,
+				video: {
+					optional: [ { sourceId: selectedCamera } ]
+				}
+			}
+
+			var selectedCamera = this.value;
+
 			var successCallback = function(mediastream) {
 				stream.updateVideoConstraint(selectedCamera);
-
-				console.log('select camera using ', selectedCamera);
-				console.log('new mediastream test ', mediastream);
-				console.log('new mediastream url ', window.URL.createObjectURL(mediastream));
-
-				tempVideoStream = mediastream;
+				stream.temp.video = mediastream;
 
 				cameraPreview.src = window.URL.createObjectURL(mediastream);
 				cameraPreview.play();
@@ -475,17 +476,6 @@ var eventListener = (function($) {
 			var errorCallback = function(e) {
 				console.log('Select camera getUserMedia error ', e);
 			};
-
-			var cameraSource  = cameraSelector.value;
-
-			var constraints = {
-				audio: false,
-				video: {
-					optional: [ { sourceId: cameraSource } ]
-				}
-			}
-
-			console.log(constraints);
 
 			navigator.getUserMedia(constraints, successCallback, errorCallback);			
 		};
@@ -498,6 +488,11 @@ var eventListener = (function($) {
 	eventListener.previewAudioInput = function() {
 		$('#main-content').on('change', '#device-select-audio', function() {
 
+			if (typeof stream.temp.audio !== 'undefined') {
+				stream.temp.audio.stop();
+				stream.temp.audio = undefined;
+			}
+
 			// Reset audio animation
 			var canvas = document.getElementById('device-audio-preview'),
 				canvasContext = canvas.getContext('2d'),
@@ -505,15 +500,18 @@ var eventListener = (function($) {
 
 			canvasContext.clearRect(0, 0, 0, 0);
 
-			var tempConstraints = {
-				audio: {
-					optional: [{ sourceId: deviceID }]
-				}
-			};
+			var selectedMic = this.value;
 
-			console.log('Testing audio using device ', tempConstraints.audio.optional[0].sourceId);
+			var constraints = {
+				audio: {
+					optional: [ { sourceId: selectedMic } ]
+				},
+				video: false,
+			}
 
 			var successCallback = function(mediastream) {
+				stream.updateAudioConstraint(selectedMic);
+				stream.temp.audio = mediastream;
 			};
 
 			var errorCallback = function(e) {

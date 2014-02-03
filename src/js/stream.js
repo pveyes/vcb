@@ -25,6 +25,15 @@ var stream = (function(window) {
 	stream.roomInfo = {};
 
 	/**
+	 * Temporary stream, used to check device
+	 */
+
+	stream.temp = {
+		audio: undefined,
+		video: undefined
+	};
+
+	/**
 	 * getUserMedia device selection
 	 */
 
