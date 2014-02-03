@@ -70,6 +70,9 @@ var presentation = (function(dataChannel) {
 			$('#slide-current').attr('src', presentation.slides[0]);
 			$('#slide-current-num').html((presentation.currentSlide+1) + '/' + presentation.totalSlide);
 
+			// Allow fullscreen slide using click
+			eventListener.register('presentation-full-screen');
+
 			// Style fix for single slide
 			if (presentation.currentSlide == presentation.totalSlide-1) {
 				$('#slide-control-next').addClass('disabled');
@@ -219,10 +222,8 @@ var presentation = (function(dataChannel) {
 			// Initialize current slide indicator
 			$('#slide-current').attr('src', presentation.slides[0]).show();
 
-			// Attach full-screen event listener on click
-			$('#main-content').on('click', '#slide-current', function() {
-				$('#slide-current')[0].webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
-			});
+			// Allow fullscreen slide using click
+			eventListener.register('presentation-full-screen');
 		}
 	};
 	

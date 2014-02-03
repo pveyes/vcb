@@ -52,21 +52,15 @@ var stream = (function(window) {
 			var muted = true;
 			dashboard.renderCreatorStream(localStreamURL, muted);
 
+			// Show presentation slide and control button
 			presentation.init();
 
-			/**
-			 * Event listener for presentation slide control signal.
-			 *
-			 * Two types of presentation slide control signal, previous and next.
-			 * Every control signal will be broadcasted directly as current slide
-			 * position to minimze computation on all clients
-			 */
-			$('#main-content').on('click', '.slide-control', function(e) {
-				e.preventDefault();
-				var controlSignal = $(this).attr('data-control');
-
-				presentation.control(controlSignal, stun.socket, webrtc.peers);
-			});
+			// Attach event listener to control button
+			var params = {
+				socket: stun.socket,
+				peers: webrtc.peers
+			};
+			eventListener.register('presentation-control', params);
 		}
 		else {
 			// current user is not creator, place his/her stream as viewer mode

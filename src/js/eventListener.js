@@ -296,6 +296,83 @@ var eventListener = (function($) {
 	};
 
 	/**
+	 * Event listener for presentation slide control signal.
+	 *
+	 * Two types of presentation slide control signal, previous and next.
+	 * Every control signal will be broadcasted directly as current slide
+	 * position to minimze computation on all clients
+	 */
+
+	eventListener.presentationControl = function (params) {
+
+		var socket = params.socket,
+			peers = params.peers;
+
+		/**
+		 * Control presentation using mouse click
+		 */
+
+		$('#main-content').on('click', '.slide-control', function(e) {
+			e.preventDefault();
+			var controlSignal = $(this).attr('data-control');
+
+			presentation.control(controlSignal, socket, peers);
+		});
+
+		/**
+		 * Control presentation using keyboard press
+		 */
+
+		$(document).on('keydown', function(e) {
+			var controlSignal = false;
+
+			switch(e.keyCode) {
+				case 37:
+					// left
+					controlSignal = 'prev';
+					break;
+				case 39:
+					// right
+					controlSignal = 'next';
+					break;
+				default:
+					break;
+			}
+
+			if (controlSignal && e.target.type != 'textarea') {
+				e.preventDefault();
+				presentation.control(controlSignal, socket, peers);
+			}
+		});
+	};
+
+	eventListener.presentationFullScreen = function () {
+
+		/**
+		 * API using screenfull.js
+		 */
+
+		$('#main-content').on('click', '#slide-current', function() {
+			screenfull.toggle(this);
+		});
+
+		/**
+		 * Allow ESCAPE key to quit fullscreen
+		 */
+
+		$(document).on('keydown', function(e) {
+			switch (e.keyCode) {
+				case 27:
+					screenfull.exit();
+					break;
+				default:
+					// do nothing
+					break;
+			}
+		});
+	};
+
+	/**
 	 * Event listener on room selection
 	 *
 	 * Clear stream before requesting getUserMedia, initialize new stream
