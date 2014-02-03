@@ -64,14 +64,18 @@ var presentation = (function(dataChannel) {
 	 */
 
 	presentation.init = function() {
-		// Display first slide on stream page, and show current slide &
-		// total slides.
-		$('#slide-current').attr('src', presentation.slides[0]).show();
-		$('#slide-current-num').html((presentation.currentSlide+1) + '/' + presentation.totalSlide);
+		if (presentation.totalSlide > 0) {
+			$('#slide').show();		
 
-		// Style fix for single slide
-		if (presentation.currentSlide == presentation.totalSlide-1) {
-			$('#slide-control-next').addClass('disabled');
+			// Display first slide on stream page, and show current slide &
+			// total slides.
+			$('#slide-current').attr('src', presentation.slides[0]);
+			$('#slide-current-num').html((presentation.currentSlide+1) + '/' + presentation.totalSlide);
+
+			// Style fix for single slide
+			if (presentation.currentSlide == presentation.totalSlide-1) {
+				$('#slide-control-next').addClass('disabled');
+			}
 		}
 	};
 

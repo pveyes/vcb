@@ -1017,13 +1017,13 @@ p {
 #slide {
 	position: absolute;
 	margin-left: 510px;
+	display: none;
 }
 
 .slide {
 	width: 400px;
 	height: 300px;
 	background: #222;
-	display: none;
 }
 
 #slide-control {
