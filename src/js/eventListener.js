@@ -225,7 +225,7 @@ var eventListener = (function($) {
 	 */
 
 	eventListener.createRoomSubmit = function() {
-		$('#main-content').on('submit', '#create-room', function(e) {
+		$('#main-content').one('submit', '#create-room', function(e) {
 			// Prevent submit form, input will be handled via javascript
 			// not HTTP request
 			e.preventDefault();
@@ -255,7 +255,7 @@ var eventListener = (function($) {
 	 */
 
 	eventListener.createRoomAddSlides = function() {
-		$('#main-content').on('change', '#room-presentation-input', function(e) {
+		$('#main-content').one('change', '#room-presentation-input', function(e) {
 			// reset presentation object
 			presentation.reset();
 
@@ -282,7 +282,7 @@ var eventListener = (function($) {
 	 */
 
 	eventListener.createRoomCancel = function() {
-		$('#main-content').on('click', '#create-room-cancel', function(e) {
+		$('#main-content').one('click', '#create-room-cancel', function(e) {
 			// prevent default button behavior
 			e.preventDefault();
 
