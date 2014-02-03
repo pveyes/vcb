@@ -1,6 +1,6 @@
 chrome.app.runtime.onLaunched.addListener(function() {
   chrome.app.window.create('index.html', {
-    // alwaysOnTop: true,
-    state: 'fullscreen'
+    alwaysOnTop: false,
+    state: 'normal'
   });
 });

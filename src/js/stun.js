@@ -44,7 +44,6 @@ var stun = (function(io) {
 			localstorage.setItem('stun', stunServer);
 		}
 
-
 		stun.socket.on('connect', function() {
 			// register socket to listen event
 			stun.register();
