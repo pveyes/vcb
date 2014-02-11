@@ -1,40 +1,38 @@
-module.exports = function(client) {	
+module.exports = function(client) {
 
-	var leaveRoom = function() {
-		var result;
+	var onRoom = false;
 
-		if (this.onRoom) {
-			this.onRoom = false;
-			result = true;
+	var leaveRoom = function () {
+		if (onRoom == false) {
+			return false;
 		}
 		else {
-			result = false;
+			onRoom = false;
+			return true;
 		}
-
-		return result;
 	}
 
-	var joinRoom = function(roomID) {
-		var result;
-
-		if (this.onRoom) {
-			result = false;
+	var joinRoom = function (roomID) {
+		if (onRoom == false) {
+			onRoom = roomID;
+			return true;
 		}
 		else {
-			this.onRoom = roomID;
-			result = true;
+			return false;
 		}
-
-		return result;
 	}
+
+	var getRoom = function () {
+		return onRoom;
+	};
 	
 	return {
 		name: client.name,
 		uid: client.uid,
 		sessionID: client.sessionID,
 		version: client.version,
-		onRoom: false,
-		leaveRoom: leaveRoom,
-		joinRoom: joinRoom
+		getRoom: getRoom,
+		joinRoom: joinRoom,
+		leaveRoom: leaveRoom
 	};
 }
