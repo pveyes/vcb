@@ -35,6 +35,9 @@
   "files": [
     "tweet-formatter.js"
   ],
+  "scripts": {
+    "test": "mocha"
+  },
   "dependencies": {
     "express": "3.4.x",
     "socket.io": "0.9.x"

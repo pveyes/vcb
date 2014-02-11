@@ -1,4 +1,4 @@
-## Virtual Classbox 3.1
+## Virtual Classbox 3.1 [![Build Status](https://travis-ci.org/pveyes/vcb.png?branch=master)](https://travis-ci.org/pveyes/vcb)
 
 > Capstone Project. Video, Audio & Data Streaming + Storage
 

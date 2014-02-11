@@ -27,12 +27,10 @@ exports.add = function(clientInfo) {
 		this.clients[clientInfo.sessionID] = new VCBClient(clientInfo)
 		this.totalClient += 1;
 		status = 'new';
-		logger.info('Success: Add Client ' + clientInfo.sessionID);
 		return status;
 	}
 	else {
 		status = 'existing';
-		logger.warn('Can\'t add client. Client has been connected');
 		return status;
 	}
 }
@@ -41,16 +39,21 @@ exports.remove = function(clientSessionID){
 	if (this.clients[clientSessionID]) {
 		delete this.clients[clientSessionID];
 		this.totalClient -= 1;
-		logger.info('Success: Remove client ' + clientSessionID);
 		return true;
 	}
 	else {
-		logger.error('Can\'t remove client ' + clientSessionID + '. Client doesn\'t exist');
 		return false;
 	}
 }
 
-exports.list = function() {
+exports.clear = function () {
+	for (client in this.clients) {
+		delete this.clients[client];
+		this.totalClient -= 1;
+	}
+}
+
+exports.list = function () {
 	var clients = new Array();
 
 	for (var client in this.clients) {
