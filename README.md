@@ -6,6 +6,10 @@
 
 My capstone project. Implementing video, audio, and data (presentation slide, chat) streaming using WebRTC and Websocket
 
+## Demo
+
+Screencast: http://youtu.be/DyJHNzwFA44
+
 ## Start
 
 Install requirement
@@ -29,7 +33,3 @@ Client side javascript and CSS must be built after edit. Grunt is used for build
 
     npm install -g grunt-cli
     grunt build
-
-## Testing
-
-> TODO
