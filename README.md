@@ -1,5 +1,7 @@
 ## Virtual Classbox 3.1 [![Build Status](https://travis-ci.org/pveyes/vcb.png?branch=master)](https://travis-ci.org/pveyes/vcb)
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/pveyes/vcb.svg)](https://greenkeeper.io/)
+
 > Capstone Project. Video, Audio & Data Streaming + Storage
 
 ## Overview
